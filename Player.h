@@ -7,8 +7,9 @@ using std::string;
 
 class Player{
 private:
-	int id;//1,2,...
-	string name;
+	int id;//1,2,3,4,5,6.
+	string name;//!!!UNIQUE!!!
+	string color;//blue,red,yellow,green,purple,white.
 	Civilisation civ;
 	vector<AbstractUnit*> units;
 public:
@@ -25,7 +26,21 @@ public:
 	}
 
 	void deleteUnit(AbstractUnit* unit) {
-		//delete the unit
+		vector<AbstractUnit*> copy;
+		for (const auto& u : this->units) {//remove_if - like algorithm
+			if (u->getId() != unit->getId()) {
+				copy.push_back(u);
+			}
+		}
+		this->units = copy;
+	}
+
+	void selectUnit(AbstractUnit* unit) const {
+		//???
+	}
+	
+	void actionUnit(AbstractUnit* unit) const {
+		//???
 	}
 };
 

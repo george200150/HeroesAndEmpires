@@ -17,6 +17,10 @@ public:
 	}
 
 	virtual string getType() const = 0;
+	virtual bool isCrossable() const = 0;
+	virtual bool isOccupied() const = 0;
+	virtual void occupy() = 0;
+	virtual void unoccupy() = 0;
 
 	virtual ~AbstractTile() = default;
 };
@@ -26,12 +30,17 @@ protected:
 
 public:
 	GrassTile(bool occupied) : AbstractTile{ true, occupied } {
-		if (rand() % 2 == 0)
+		int option = rand();
+		if (option % 3 == 0) {
 			setBrush(QBrush(QColor(50, 137, 48, 255)));
-		
-		else {
+		}
+		else if (option % 3 == 1) {
 			setBrush(QBrush(QColor(128, 195, 66, 255)));
 		}
+		else {
+			setBrush(QBrush(QColor(0, 99, 37, 255)));
+		}
+
 
 	}
 

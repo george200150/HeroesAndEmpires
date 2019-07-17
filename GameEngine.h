@@ -80,13 +80,18 @@ public:
 	void loadLevel() {
 		int board_w = 30;
 		int board_h = 20;
+		int id = 0;
 		for (int y = 0; y < board_h; y++) {
 			for (int x = 0; x < board_w; x++) {
 				emit tileCreated(x, y);
-				if (rand() % 1200 > 1150)
-					emit unitCreatedAt(new Villager{100,20}, x, y);
-				if (rand() % 1200 > 1150)
-					emit unitCreatedAt(new Tower{ 1000,20 }, x, y);
+				if (rand() % 1200 > 1150) {
+					emit unitCreatedAt(new Villager{ id,100,20 }, x, y);
+					id++;
+				}
+				if (rand() % 1200 > 1150) {
+					emit unitCreatedAt(new Tower{ id,1000,20 }, x, y);
+					id++;
+				}
 			}
 		}
 	}
@@ -96,8 +101,8 @@ public:
 		loadLevel();
 		QObject::connect(&timer, &QTimer::timeout, [&]() {
 			emit tick();
+			time++;
 			if (isTurnFinished()) {
-				timer.stop();
 				emit turnFinished();
 			}
 
