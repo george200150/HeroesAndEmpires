@@ -1,10 +1,12 @@
 #pragma once
+#include <QGraphicsRectItem>
+#include <QBrush>
 #include <string>
 using std::string;
 
 
 
-class AbstractUnit{
+class AbstractUnit : public QGraphicsRectItem {
 protected:
 	int baseHealth;
 	int currentHealth;
@@ -14,6 +16,7 @@ protected:
 	//vector<Action*> actions; - this is gonna be my next headache for this week
 public:
 	AbstractUnit(int baseHealth, int damagePerHit) : baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit }{
+		setRect(0, 0, 20, 20);
 		currentHealth = baseHealth;
 		currentDamagePerHit = damagePerHit;
 	}
@@ -61,6 +64,7 @@ protected:
 public:
 	Villager(int baseHealth, int damagePerHit) : AbstractCharacter{ baseHealth ,damagePerHit } {
 		image = "NULL";
+		setBrush(QBrush(QImage("villager.fw.png")));
 	}
 
 	string getImage() const {

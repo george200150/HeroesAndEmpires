@@ -20,6 +20,7 @@ signals:
 	void tick();
 	void turnFinished();
 	void unitCreated(AbstractUnit* Created, AbstractTile* Spot/*int x, int y*/);
+	void unitCreatedAt(AbstractUnit* Created, int x, int y);
 	void tileCreated(/*AbstractTile* tile, */int x, int y);//the game itself will decide what tile it generates
 	void tileOccupied(AbstractTile* tile, AbstractUnit* Occupand/*, int x, int y*/);//either (tile) or (x,y)
 	void tileFreed(AbstractTile* tile /*,int x, int y*/);
@@ -77,11 +78,13 @@ public:
 
 
 	void loadLevel() {
-		int board_w = 80;
-		int board_h = 60;
-		for (int y = 0; y < board_h; y ++) {
-			for (int x = 0; x < board_w; x ++) {
-				emit tileCreated(x,y);
+		int board_w = 40;
+		int board_h = 30;
+		for (int y = 0; y < board_h; y++) {
+			for (int x = 0; x < board_w; x++) {
+				emit tileCreated(x, y);
+				if (rand() % 1200 > 1000)
+					emit unitCreatedAt(new Villager{100,20}, x, y);
 			}
 		}
 	}
