@@ -16,7 +16,7 @@ protected:
 	//vector<Action*> actions; - this is gonna be my next headache for this week
 public:
 	AbstractUnit(int baseHealth, int damagePerHit) : baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit }{
-		setRect(0, 0, 20, 20);
+		setRect(0, 0, 50, 50);
 		currentHealth = baseHealth;
 		currentDamagePerHit = damagePerHit;
 	}
@@ -116,6 +116,7 @@ protected:
 public:
 	Tower(int baseHealth, int damagePerHit) : AbstractBuilding{ baseHealth ,damagePerHit } {
 		image = "NULL";
+		setBrush(QBrush(QImage("tower.fw.png")));
 	}
 
 	string getImage() const {

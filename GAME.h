@@ -66,7 +66,7 @@ private:
 
 
 	AbstractTile* getTileAt(int x, int y) {
-		return this->tileMatrix.at(40 * y + x);
+		return this->tileMatrix.at(30 * y + x);
 	}
 
 	void addTile(int x, int y) {
@@ -75,23 +75,28 @@ private:
 		//this->tileMatrix.at(x*30+y) = tile;//30 is the height of the table
 		//free space should be initialised already (pre pushed_back elements in constructor)
 		//whatever x,y and multiply are bad
+		
+		
 		this->tileMatrix.push_back(tile);
 
-		tile->setPos(x*20, y*20);
+		tile->setPos(x*50, y*50);
 		scene->addItem(tile);
 	}
 
 	
 	void addUnit(AbstractUnit* unit, int x, int y) {
+		
 		this->unitMatrix.push_back(unit);
+		//THIS IS WRONG!!!
+		//I MUST INITIALISE ALL THE SPACE IN THE MATRIX WITH NULL/NAN ABSTRACT TILES
+		//AND REPLACE THEM WHEN A TILE IS ADDED / WHEN A PLAYER OCCUPIES/FREES THE TILE etc...
+		//so that the brush is ok
 
-		unit->setPos(x * 20, y * 20);
-		unit->ensureVisible();
+
+		unit->setPos(x * 50, y * 50);
 		AbstractTile* tile = getTileAt(x, y);
-		//tile->setBrush(QImage("villager.jpg"));
-		tile->setBrush(QColor(Qt::red));
-
 		scene->addItem(unit);
+		
 	}
 
 	void initSignalSlots() {
@@ -159,7 +164,7 @@ private:
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setFixedSize(800, 600);
 		scene->setSceneRect(0, 0, 800, 600);
-		setBackgroundBrush(QBrush(Qt::yellow));
+		setBackgroundBrush(QBrush(QColor(215, 214, 213,127)));
 
 	}
 

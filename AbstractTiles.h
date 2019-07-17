@@ -13,7 +13,7 @@ protected:
 public:
 	AbstractTile(bool crossable, bool occupied) :crossable{ crossable }, occupied{ occupied } {
 		this->image = "NULL";
-		setRect(0, 0, 20, 20);
+		setRect(0, 0, 50, 50);
 	}
 
 	virtual string getType() const = 0;
@@ -28,6 +28,7 @@ public:
 	GrassTile(bool occupied) : AbstractTile{ true, occupied } {
 		if (rand() % 2 == 0)
 			setBrush(QBrush(QColor(50, 137, 48, 255)));
+		
 		else {
 			setBrush(QBrush(QColor(128, 195, 66, 255)));
 		}
