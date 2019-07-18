@@ -5,7 +5,9 @@
 #include "AbstractUnit.h"
 
 #include <vector>
+#include <string>
 using std::vector;
+using std::string;
 
 /*
 This class is the actual service of the GAME
@@ -20,13 +22,45 @@ private:
 
 	int player_turn_count, player_count;
 	int base_money_per_turn;
+	string selectedAction;
 
 	AbstractTile* SelectedTile = nullptr;
 	AbstractUnit* SelectedUnit = nullptr;
 	int selectedX = -1, selectedY = -1;
+	bool actionSucceded = false;
 
 public:
-	Map(){ initialiseFreeSpace(); }
+
+	vector<int> getXYbyUnit(AbstractUnit* unit) const {
+		vector<int> xy;
+		int x = 0;
+		int y = 0;
+		for (const auto& u : this->unitMatrix) {
+			if (unit->getId() == u->getId()) {
+				
+				xy.push_back(x);
+				xy.push_back(y);
+				break;
+			}
+			x++;
+			if (x >= 30) {//width of matrix reached
+				y++;
+				x = 0;
+			}
+		}
+		return xy;
+	}
+
+	Map() { initialiseFreeSpace(); this->selectedAction = "NONE"; }
+
+	void setSelectedAction(string action) {
+		this->selectedAction = action;
+	}
+
+	string getSelectedAction() {
+		return this->selectedAction;
+	}
+
 
 	bool wasSelectionNULL() {
 		return this->SelectedTile == nullptr && this->SelectedUnit == nullptr;
@@ -41,6 +75,7 @@ public:
 		this->SelectedUnit = nullptr;
 		this->selectedX = -1;
 		this->selectedY = -1;
+		this->selectedAction = "NONE";
 	}
 
 	bool UnitExistsInSelected(AbstractUnit* localSelectedUnit) {
@@ -153,6 +188,37 @@ public:
 		this->unitMatrix.at(30 * selectedY + selectedX) = new EmptyUnit{ -1,-1,-1,-1,"-1" };//mark the last position of the unis as free
 		this->SelectedTile->unoccupy();
 		Destination->occupy();
+	}
+
+	bool getActionSuccess() const {
+		return this->actionSucceded;
+	}
+
+	void attackAction(AbstractUnit* Attacker, AbstractUnit* Defender) {
+		int health = Defender->getCurrentHealth();
+		int hit = Attacker->getCurrentDamagePerHit();
+		if (rand() % 100 <= Attacker->getCurrentHitChance()) {
+			Defender->modifyCurrentHealth(health - hit);
+		}
+		if (health == Defender->getCurrentHealth())
+			this->actionSucceded = false;
+		else {
+			this->actionSucceded = true;
+		}
+	}
+	void fortifyAction(AbstractUnit* Fortificator, AbstractUnit* Fortificated);
+	void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
+	void repairAction(AbstractUnit* Repairer, AbstractUnit* Building);
+	void destroyAction(AbstractUnit* Destroyed) {
+		//this->player_count->deleteUnit();
+		auto temp = Destroyed;
+		vector<int> xy = getXYbyUnit(Destroyed);
+		Destroyed = new EmptyUnit{ -1,-1,-1,-1,"-1" };//this could go
+		delete temp;//nu ii place aici ca se sterge...
+		//ALSO MODIFY IN 
+		int x = xy.at(0);
+		int y = xy.at(1);
+		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1" };
 	}
 };
 

@@ -4,6 +4,8 @@
 #include <string>
 using std::string;
 
+
+#include "AbstractAction.h"
 //#include "Player.h"
 
 
@@ -17,9 +19,15 @@ protected:
 	int baseHitChance;
 	int currentHitChance;
 	string type;
+	//int totalCapacity;
+	//int occupiedCapacity;
+	//bool canFortify;
+	//this implies one more inheritance, as there must be a vector of units on each tile...
+	//(composite pattern)
+
 	//Player* owner;
 
-	//vector<Action*> actions; - this is gonna be my next headache for this week
+	vector<AbstractAction*> actions;// - this is gonna be my next headache for this week
 public:
 	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type) : id{ id }, baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit }, baseHitChance{ hitChance }, type{ type } {
 		setRect(0, 0, 50, 50);
@@ -28,6 +36,7 @@ public:
 		currentHitChance = hitChance;
 	}
 
+	virtual vector<AbstractAction*> getActions() = 0;
 	//virtual Player* getOwner() = 0;	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!
 	virtual bool canMove() const = 0;
 	virtual string getType() const = 0;
@@ -58,6 +67,7 @@ public:
 	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
 	}
 
+	virtual vector<AbstractAction*> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
 	virtual int getId() const override = 0;
@@ -85,6 +95,7 @@ public:
 	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
 	}
 
+	virtual vector<AbstractAction*> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
 	virtual int getId() const override= 0;
@@ -111,6 +122,7 @@ public:
 	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
 	}
 
+	virtual vector<AbstractAction*> getActions() override { vector<AbstractAction*> v;  return v; }
 	virtual bool canMove() const override { return false; }
 	virtual string getType() const override { return "-1"; }
 	virtual int getId() const override { return -1; }
@@ -133,6 +145,21 @@ protected:
 public:
 	Villager(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
 		setBrush(QBrush(QImage("villager.fw.png")));
+		AbstractAction* action;
+		action = new AbstractAction{ "ATTACK",2 };
+		this->actions.push_back(action);
+		action = new AbstractAction{ "MOVE",1 };
+		this->actions.push_back(action);
+		action = new AbstractAction{ "FORTIFY",1 };
+		this->actions.push_back(action);
+		action = new AbstractAction{ "BUILD",3 };
+		this->actions.push_back(action);
+		action = new AbstractAction{ "REPAIR",3 };
+		this->actions.push_back(action);
+	}
+
+	vector<AbstractAction*> getActions() override {
+		return this->actions;
 	}
 
 	bool canMove() const override { return true; }
@@ -205,6 +232,13 @@ protected:
 public:
 	Tower(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
 		setBrush(QBrush(QImage("tower.fw.png")));
+		AbstractAction* action;
+		action = new AbstractAction{ "ATTACK",1 };
+		this->actions.push_back(action);
+	}
+
+	vector<AbstractAction*> getActions() override {
+		return this->actions;
 	}
 
 	virtual bool canMove() const override { return false; }
@@ -275,6 +309,17 @@ protected:
 public:
 	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER" } {
 		setBrush(QBrush(QImage("galleon.fw.png")));
+		AbstractAction* action;
+		action = new AbstractAction{ "ATTACK",2 };
+		this->actions.push_back(action);
+		action = new AbstractAction{ "MOVE",1 };
+		this->actions.push_back(action);
+		action = new AbstractAction{ "DOCK",1 };
+		this->actions.push_back(action);
+	}
+
+	vector<AbstractAction*> getActions() override {
+		return this->actions;
 	}
 
 	virtual bool canMove() const override { return true; }

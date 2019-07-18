@@ -8,6 +8,7 @@
 #include <qlistwidget.h>
 #include <qlabel.h>
 #include <qboxlayout.h>
+#include <qpushbutton.h>
 
 #include "GameEngine.h"
 #include "Player.h"
@@ -19,6 +20,60 @@
 using std::string;
 using std::vector;
 using std::to_string;
+
+
+class ActionWindow : public QWidget {
+private:
+	Map* map = nullptr;
+	AbstractTile* tile = nullptr;
+	AbstractUnit* unit = nullptr;
+	QListWidget* lst = new QListWidget;
+	QPushButton* btnSelect = new QPushButton{ "SELECT ACTION" };
+
+	void guiSetup() {
+		QVBoxLayout* linit = new QVBoxLayout;
+		this->setLayout(linit);
+
+		QWidget* wdg = new QWidget;
+		QVBoxLayout* lv = new QVBoxLayout;
+		wdg->setLayout(lv);
+		lv->addWidget(new QLabel{"ACTIONS THIS UNIT CAN EXECUTE: "});
+		lv->addWidget(lst);
+		lv->addWidget(btnSelect);
+
+		linit->addWidget(wdg);
+	}
+
+	void initSignalSlots() {
+
+		QObject::connect(btnSelect, &QPushButton::clicked, this, [&]() {
+			if (this->lst->selectedItems().isEmpty()) {
+				QMessageBox::warning(this, "Warning", "NO ACTION WAS SELECTED");
+			}
+			else {
+				auto item = this->lst->selectedItems().at(0);
+				auto action = item->text().toStdString();
+				this->map->setSelectedAction(action);
+				this->close();
+			}
+			; });
+	}
+
+	void initialGUIState() {
+		for (const auto& action : this->unit->getActions()) {
+			QListWidgetItem* item = new QListWidgetItem;
+			item->setText(QString::fromStdString(action->getName()));
+			lst->addItem(item);
+		}
+	}
+
+public:
+	ActionWindow(Map* map, AbstractTile* tile, AbstractUnit* unit) : map{ map }, tile{ tile }, unit{ unit } {
+		guiSetup();
+		initSignalSlots();
+		initialGUIState();
+	}
+};
 
 
 class InfoWindow : public QWidget {
@@ -111,7 +166,8 @@ public:
 
 
 
-#include "Map.h"
+
+
 
 class GAME: public QGraphicsView{
 private:
@@ -188,7 +244,9 @@ private:
 
 	void changeTurn() {
 		QMessageBox::information(this, "Info", "TURN TIME EXPIRED!");
-		
+		this->map->deleteSelection();
+		this->scene->removeItem(SelectedMark);//i do not know if it can throw or not...
+
 		//all actions undergone must be stopped!
 
 		this->map->changeTurn();
@@ -221,6 +279,34 @@ private:
 	}
 
 
+	//void Tile_Square::mousePressEvent(QGraphicsSceneMouseEvent *event)
+	//{
+	//	if (event->buttons() & Qt::LeftButton)
+	//	{
+	//		// ... handle left click here
+	//	}
+	//	else if (event->buttons() & Qt::RightButton)
+	//	{
+	//		// ... handle right click here
+	//	}
+	//}
+
+	/*what I want is this:
+
+	- when left click is pressed, something is selected. (tiles - source, destination)
+
+	- when right click is pressed, a window with possible actions on that tile is presented
+	- the user has to choose one of those actions (idk if it interferes with mousepressevent...)
+
+	- when a tile destination is clicked without action, it becomes source tile (if possible)
+
+	- when a tile destination is clicked with action selected, the action is executed.
+
+
+	I have to clarify some things... like all those if-s and else-s... i must create a better structure.
+
+	*/
+
 	void mousePressEvent(QMouseEvent* ev) override {
 		int x = ev->pos().x();
 		int y = ev->pos().y();
@@ -234,44 +320,74 @@ private:
 		auto localSelectedTile = getTileAt(x, y);
 		auto localSelectedUnit = getUnitAt(x, y);
 
-		if (this->map->wasSelectionNULL()) {
-			if (this->map->UnitExistsInSelected(localSelectedUnit)) {
-				this->map->setSelection(localSelectedTile, localSelectedUnit, x, y);
-				this->SelectedMark->setPos(x * 50, y * 50);
-				this->scene->addItem(SelectedMark);
-			}
-			else {
-				/*ignore selection*/
+		if (ev->button() == Qt::RightButton) {
+			if (!this->map->wasSelectionNULL() && this->map->isSameSelection(x, y) && tile != nullptr && unit != nullptr && unit->getId() != -1) {
+				ActionWindow* act = new ActionWindow{ this->map,tile,unit };
+				act->show();
 			}
 		}
-		else {
-			//see if local selection is in range of action
-			//see if the tile supports the action
-			//execute action
-			if (this->map->isSameSelection(x, y)) {
-				//ignore command
-				this->scene->removeItem(SelectedMark);
-				this->map->deleteSelection();
+		else if (ev->button() == Qt::LeftButton) {
+
+			if (this->map->wasSelectionNULL()) {
+				if (this->map->UnitExistsInSelected(localSelectedUnit)) {
+					this->map->setSelection(localSelectedTile, localSelectedUnit, x, y);
+					this->SelectedMark->setPos(x * 50, y * 50);
+					this->scene->addItem(SelectedMark);
+				}
+				//else {
+					/*ignore selection*/
+				//}
 			}
 			else {
-				//we will simplify a lot for now:
-				if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "LAND") {
-					this->map->moveAction(localSelectedTile, x, y);
-					this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
-					this->map->deleteSelection();
+				if (this->map->isSameSelection(x, y)) {
+					//ignore command
 					this->scene->removeItem(SelectedMark);
-
-				}
-				else if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && !localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "WATER") {
-					this->map->moveAction(localSelectedTile, x, y);
-					this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
 					this->map->deleteSelection();
-					this->scene->removeItem(SelectedMark);
 				}
 				else {
-					QMessageBox::warning(this, "Permission Warning", "YOU CANNOT EXECUTE THAT ACTION!");
-					this->map->deleteSelection();
-					this->scene->removeItem(SelectedMark);
+					string action = this->map->getSelectedAction();
+					if (action == "NONE") {
+						//renew selection
+						this->map->setSelection(localSelectedTile, localSelectedUnit, x, y);
+						this->SelectedMark->setPos(x * 50, y * 50);
+						this->scene->addItem(SelectedMark);
+					}
+					else if (action == "MOVE") {
+						if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "LAND") {
+							this->map->moveAction(localSelectedTile, x, y);
+							this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
+							this->map->deleteSelection();
+							this->scene->removeItem(SelectedMark);
+
+						}
+						else if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && !localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "WATER") {
+							this->map->moveAction(localSelectedTile, x, y);
+							this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
+							this->map->deleteSelection();
+							this->scene->removeItem(SelectedMark);
+						}
+						else {
+							QMessageBox::warning(this, "Permission Warning", "YOU CANNOT EXECUTE THAT ACTION!");
+							this->map->deleteSelection();
+							this->scene->removeItem(SelectedMark);
+						}
+					}//end of move
+					else if (action == "ATTACK") {
+						if (localSelectedTile->isOccupied()) {//also check if not friendly fire
+							this->map->attackAction(this->map->getSelectedUnit(), localSelectedUnit);
+							if (localSelectedUnit->getCurrentHealth() <= 0) {
+								this->map->destroyAction(localSelectedUnit);
+							}
+							this->map->deleteSelection();
+							this->scene->removeItem(SelectedMark);
+							if (this->map->getActionSuccess()) {
+								QMessageBox::information(this, "SUCCESS!", "YOU HIT 'EM HARD!");
+							}
+							else {
+								QMessageBox::information(this, "OH NO!", "YOU MISSED!");
+							}
+						}
+					}//enf of attack
 				}
 			}
 		}
@@ -291,37 +407,34 @@ private:
 		wndw->show();
 	}
 
-	//handle mouse move
-	void mouseMoveEvent(QMouseEvent* ev) override {
-		//works only if setMouseTracking(true);
-		
+	////handle mouse move
+	//void mouseMoveEvent(QMouseEvent* ev) override {
+	//	//works only if setMouseTracking(true);
+	//	//player->setPos(x, player->y());
+	//}
 
-		//player->setPos(x, player->y());
-	}
-
-	void keyPressEvent(QKeyEvent* ev) override {
-		if (ev->key() == Qt::Key_Left) {
-			//player->moveX(-15);
-		}
-		else if (ev->key() == Qt::Key_Right) {
-			//player->moveX(15);
-		}
-		else if (ev->key() == Qt::Key_Space) {
-			//restart
-		}
-
-	}
+	//void keyPressEvent(QKeyEvent* ev) override {
+	//	if (ev->key() == Qt::Key_Left) {
+	//		//player->moveX(-15);
+	//	}
+	//	else if (ev->key() == Qt::Key_Right) {
+	//		//player->moveX(15);
+	//	}
+	//	else if (ev->key() == Qt::Key_Space) {
+	//		//restart
+	//	}
+	//}
 
 	void advanceGame() {
 		int i;
-		for (i = 0; i < this->map->getPlayerCount(); i++) {/*MIGHT HAVE TO GO... SOME CALCULATIONS COULD BE DONE IN SERVICE...*/
-			if (this->map->getPlayerTurnCount() % this->map->getPlayerCount() == i) {
-				auto playerUnits = this->players.at(i).getAllUnits();
-				for (auto& unit : playerUnits) {
-					/*TO BE CONTINUED*/
-				}
-			}
-		}
+		//for (i = 0; i < this->map->getPlayerCount(); i++) {/*MIGHT HAVE TO GO... SOME CALCULATIONS COULD BE DONE IN SERVICE...*/
+		//	if (this->map->getPlayerTurnCount() % this->map->getPlayerCount() == i) {
+		//		auto playerUnits = this->players.at(i).getAllUnits();
+		//		for (auto& unit : playerUnits) {
+		//			/*TO BE CONTINUED*/
+		//		}
+		//	}
+		//}
 	}
 
 
@@ -346,7 +459,8 @@ public:
 
 		initSignalSlots();
 
-		this->SelectedMark->setBrush(QBrush(QColor(224, 195, 30, 100)));
+		//this->SelectedMark->setBrush(QBrush(QColor(224, 195, 30, 100)));
+		this->SelectedMark->setBrush(QBrush(QColor(255, 255, 0, 100)));
 		this->SelectedMark->setRect(0, 0, 50, 50);
 	}
 };

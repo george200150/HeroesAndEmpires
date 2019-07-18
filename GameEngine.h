@@ -86,18 +86,18 @@ public:
 				if (abs(19 * x + 29 * y - 551) >= 100) {
 					emit tileCreated(new GrassTile{ false }, x, y);
 					if (rand() % 1200 > 1150) {
-						emit unitCreatedAt(new Villager{ id,100,20,50 }, x, y);
+						emit unitCreatedAt(new Villager{ id,100,20,90 }, x, y);
 						id++;
 					}
 					if (rand() % 1200 > 1150) {
-						emit unitCreatedAt(new Tower{ id,1000,20,50 }, x, y);
+						emit unitCreatedAt(new Tower{ id,1000,20,75 }, x, y);
 						id++;
 					}
 				}
 				else {
 					emit tileCreated(new WaterTile{ false }, x, y);
 					if (rand() % 1200 > 1150) {
-						emit unitCreatedAt(new Galleon{ id,100,20,50 }, x, y);
+						emit unitCreatedAt(new Galleon{ id,100,20,75 }, x, y);
 						id++;
 					}
 				}
