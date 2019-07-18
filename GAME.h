@@ -25,7 +25,9 @@ class InfoWindow : public QWidget {
 private:
 	AbstractTile* tile = nullptr;
 	AbstractUnit* unit = nullptr;
+	int x, y;
 
+	QLabel* labType = new QLabel{ "Type: " };
 	QLabel* labOccupied = new QLabel{ "Occupied: " };
 	QLabel* labCrossable = new QLabel{ "Crossable: " };
 	QListWidget* lst = new QListWidget;
@@ -37,6 +39,7 @@ private:
 		QWidget* wdg = new QWidget;
 		QVBoxLayout* lv = new QVBoxLayout;
 		wdg->setLayout(lv);
+		lv->addWidget(labType);
 		lv->addWidget(labOccupied);
 		lv->addWidget(labCrossable);
 		lv->addWidget(lst);
@@ -47,19 +50,15 @@ private:
 	void initSignalSlots(){}
 
 	void initialGUIState() {
+		this->labType->setText(this->labType->text() + QString::fromStdString(tile->getType()));
+
 		if (this->tile->isOccupied() == true) {
 			this->labOccupied->setText(this->labOccupied->text() + QString::fromStdString("TRUE"));
-		}
-		else {
-			this->labOccupied->setText(this->labOccupied->text() + QString::fromStdString("FALSE"));
-		}
-
-		if (this->tile->isCrossable() == true) {
-			this->labCrossable->setText(this->labCrossable->text() + QString::fromStdString("TRUE"));
 			//add info about the occupant in the list
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText("unit: ");
-			
+			string name = "unit @ (" + to_string(x) + "," + to_string(y) + ")";
+			item->setText(QString::fromStdString(name));
+
 			//we could map the id so that we get the name of the unit
 			QListWidgetItem* itemH = new QListWidgetItem;
 			string infoH = "Health: " + to_string(unit->getCurrentHealth()) + "/" + to_string(unit->getBaseHealth());
@@ -67,8 +66,21 @@ private:
 			QListWidgetItem* itemD = new QListWidgetItem;
 			string infoD = "Damage: " + to_string(unit->getCurrentDamagePerHit()) + "/" + to_string(unit->getBaseDamagePerHit());
 			itemD->setText(QString::fromStdString(infoD));
-			
-			
+			QListWidgetItem* itemC = new QListWidgetItem; 
+			string infoC = "HitChance: " + to_string(unit->getCurrentHitChance()) + "/" + to_string(unit->getBaseHitChance());
+			itemC->setText(QString::fromStdString(infoC));
+			lst->addItem(item);
+			lst->addItem(itemH);
+			lst->addItem(itemD);
+			lst->addItem(itemC);
+		}
+		else {
+			this->labOccupied->setText(this->labOccupied->text() + QString::fromStdString("FALSE"));
+		}
+
+
+		if (this->tile->isCrossable() == true) {
+			this->labCrossable->setText(this->labCrossable->text() + QString::fromStdString("TRUE"));
 		}
 		else {
 			this->labCrossable->setText(this->labCrossable->text() + QString::fromStdString("FALSE"));
@@ -77,7 +89,7 @@ private:
 
 
 public:
-	InfoWindow(AbstractTile* tile, AbstractUnit* unit) : tile{ tile }, unit{ unit }{
+	InfoWindow(AbstractTile* tile, AbstractUnit* unit, int x, int y) : tile{ tile }, unit{ unit }, x{ x }, y{ y } {
 		this->setAttribute(Qt::WA_DeleteOnClose);
 		guiSetup();
 		initSignalSlots();
@@ -87,24 +99,26 @@ public:
 };
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+#include "Map.h"
+
 class GAME: public QGraphicsView{
 private:
-	//matrix vector<pointer to vector<Tiles>>
-	//matrix vector<pointer to vector<Units>>
-	//the position in the matrix of the tile/unit
-	//is the actual position on the map
-	//vector<vector< AbstractTile*>> tileMatrix;
-	//vector<vector< AbstractUnit*>> unitMatrix;
 
-	//.change of plan: there will be two VECTORS.
-	//the vector.size() % number of columns => beginning of a row (=> x)
-	//from the beginning we add the y to find the element on (x,y)
-	vector< AbstractTile*> tileMatrix;
-	vector< AbstractUnit*> unitMatrix;
+	Map* map;
 
-	int player_turn_count, player_count;
-
-	int base_money_per_turn;
+	QGraphicsRectItem* SelectedMark = new QGraphicsRectItem;// (to be deleted in the destructor)	!!!!	!!!!	!!!!	!!!!
 
 	GameEngine* engine;
 
@@ -142,38 +156,34 @@ private:
 
 
 	AbstractTile* getTileAt(int x, int y) {
-		return this->tileMatrix.at(30 * y + x);
+		return this->map->getTileAt(x, y);
 	}
 
 	AbstractUnit* getUnitAt(int x, int y) {
-		return this->unitMatrix.at(30 * y + x);
+		return this->map->getUnitAt(x, y);
 	}
 
-	void addTile(int x, int y) {
-		AbstractTile* tile = new GrassTile{false};
-		//also add to class matrix of tiles
-		//this->tileMatrix.at(x*30+y) = tile;//30 is the height of the table
-		//free space should be initialised already (pre pushed_back elements in constructor)
-		//whatever x,y and multiply are bad
-		
-		
-		this->tileMatrix.push_back(tile);
+	void addTile(AbstractTile* tile, int x, int y) {
 
 		tile->setPos(x * 50, y * 50);
 		scene->addItem(tile);
+
+		this->map->addTile(tile, x, y);
 	}
 
 	
 	void addUnit(AbstractUnit* unit, int x, int y) {
 		
-		//this->unitMatrix.push_back(unit); WRONG
-		this->unitMatrix.at(30 * y + x) = unit;
-		//I MUST INITIALISE ALL THE SPACE IN THE MATRIX WITH NULL/NAN ABSTRACT TILES
+		//auto temp = this->unitMatrix.at(30 * y + x);
 
 		unit->setPos(x * 50, y * 50);
-		AbstractTile* tile = getTileAt(x, y);
+		/*AbstractTile* tile = getTileAt(x, y);
+		tile->occupy();*/
 		scene->addItem(unit);
-		
+
+		/*this->unitMatrix.at(30 * y + x) = unit;
+		delete temp;*/
+		this->map->addUnit(unit, x, y);
 	}
 
 	void changeTurn() {
@@ -181,20 +191,7 @@ private:
 		
 		//all actions undergone must be stopped!
 
-		player_turn_count++;
-		base_money_per_turn = 1 + player_count / player_count;
-	}
-
-
-	void initialiseFreeSpace() {
-		int id = -1;
-		int baseHealth = -1;
-		int damagePerHit = -1;
-		for (int i = 0; i < 30; i++)
-			for (int j = 0; j < 20; j++) {
-				Empty* unit = new Empty{ id, baseHealth, damagePerHit };
-				this->unitMatrix.push_back(unit);
-			}
+		this->map->changeTurn();
 	}
 
 
@@ -205,8 +202,8 @@ private:
 
 		QObject::connect(engine, &GameEngine::tick, this, &GAME::advanceGame);
 
-		QObject::connect(engine, &GameEngine::tileCreated, [&](int x, int y) {
-			addTile(x, y);
+		QObject::connect(engine, &GameEngine::tileCreated, [&](AbstractTile* tile, int x, int y) {
+			addTile(tile, x, y);
 		});
 
 		QObject::connect(engine, &GameEngine::unitCreatedAt, [&](AbstractUnit* unit, int x, int y) {
@@ -223,6 +220,63 @@ private:
 		});
 	}
 
+
+	void mousePressEvent(QMouseEvent* ev) override {
+		int x = ev->pos().x();
+		int y = ev->pos().y();
+
+		x /= 50;
+		y /= 50;
+
+		auto tile = getTileAt(x, y);
+		auto unit = getUnitAt(x, y);
+
+		auto localSelectedTile = getTileAt(x, y);
+		auto localSelectedUnit = getUnitAt(x, y);
+
+		if (this->map->wasSelectionNULL()) {
+			if (this->map->UnitExistsInSelected(localSelectedUnit)) {
+				this->map->setSelection(localSelectedTile, localSelectedUnit, x, y);
+				this->SelectedMark->setPos(x * 50, y * 50);
+				this->scene->addItem(SelectedMark);
+			}
+			else {
+				/*ignore selection*/
+			}
+		}
+		else {
+			//see if local selection is in range of action
+			//see if the tile supports the action
+			//execute action
+			if (this->map->isSameSelection(x, y)) {
+				//ignore command
+				this->scene->removeItem(SelectedMark);
+				this->map->deleteSelection();
+			}
+			else {
+				//we will simplify a lot for now:
+				if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "LAND") {
+					this->map->moveAction(localSelectedTile, x, y);
+					this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
+					this->map->deleteSelection();
+					this->scene->removeItem(SelectedMark);
+
+				}
+				else if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && !localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "WATER") {
+					this->map->moveAction(localSelectedTile, x, y);
+					this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
+					this->map->deleteSelection();
+					this->scene->removeItem(SelectedMark);
+				}
+				else {
+					QMessageBox::warning(this, "Permission Warning", "YOU CANNOT EXECUTE THAT ACTION!");
+					this->map->deleteSelection();
+					this->scene->removeItem(SelectedMark);
+				}
+			}
+		}
+	}
+
 	void mouseDoubleClickEvent(QMouseEvent* ev) override{
 		int x = ev->pos().x();
 		int y = ev->pos().y();
@@ -233,7 +287,7 @@ private:
 		auto tile = getTileAt(x, y);
 		auto unit = getUnitAt(x, y);
 
-		InfoWindow* wndw = new InfoWindow{ tile, unit };
+		InfoWindow* wndw = new InfoWindow{ tile, unit, x, y };
 		wndw->show();
 	}
 
@@ -260,11 +314,11 @@ private:
 
 	void advanceGame() {
 		int i;
-		for (i = 0; i < player_count; i++) {
-			if (player_turn_count % player_count == i) {
+		for (i = 0; i < this->map->getPlayerCount(); i++) {/*MIGHT HAVE TO GO... SOME CALCULATIONS COULD BE DONE IN SERVICE...*/
+			if (this->map->getPlayerTurnCount() % this->map->getPlayerCount() == i) {
 				auto playerUnits = this->players.at(i).getAllUnits();
 				for (auto& unit : playerUnits) {
-					
+					/*TO BE CONTINUED*/
 				}
 			}
 		}
@@ -277,22 +331,23 @@ private:
 
 		setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-		setFixedSize(800, 600);
-		scene->setSceneRect(0, 0, 800, 600);
+		setFixedSize(1500, 1000);
+		scene->setSceneRect(0, 0, 1500, 1000);
 		setBackgroundBrush(QBrush(QColor(215, 214, 213,127)));
 
 	}
 
 public:
-	GAME(GameEngine* engine) :engine{ engine } {
+	GAME(GameEngine* engine, Map* map) :engine{ engine }, map{ map } {
 		setMouseTracking(true);
 		initScene();
 		initEnclosingWals();
 		createPlayer("Wallace");
 
-		initialiseFreeSpace();
-
 		initSignalSlots();
+
+		this->SelectedMark->setBrush(QBrush(QColor(224, 195, 30, 100)));
+		this->SelectedMark->setRect(0, 0, 50, 50);
 	}
 };
 

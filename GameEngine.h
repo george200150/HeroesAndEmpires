@@ -21,7 +21,7 @@ signals:
 	void turnFinished();
 	void unitCreated(AbstractUnit* Created, AbstractTile* Spot/*int x, int y*/);
 	void unitCreatedAt(AbstractUnit* Created, int x, int y);
-	void tileCreated(/*AbstractTile* tile, */int x, int y);//the game itself will decide what tile it generates
+	void tileCreated(AbstractTile* tile, int x, int y);//the game itself will decide what tile it generates
 	void tileOccupied(AbstractTile* tile, AbstractUnit* Occupand/*, int x, int y*/);//either (tile) or (x,y)
 	void tileFreed(AbstractTile* tile /*,int x, int y*/);
 	//void unitMoved(AbstractUnit* Moved, int exX, int exY, int newX, int newY);
@@ -83,17 +83,27 @@ public:
 		int id = 0;
 		for (int y = 0; y < board_h; y++) {
 			for (int x = 0; x < board_w; x++) {
-				emit tileCreated(x, y);
-				if (rand() % 1200 > 1150) {
-					emit unitCreatedAt(new Villager{ id,100,20 }, x, y);
-					id++;
+				if (abs(19 * x + 29 * y - 551) >= 100) {
+					emit tileCreated(new GrassTile{ false }, x, y);
+					if (rand() % 1200 > 1150) {
+						emit unitCreatedAt(new Villager{ id,100,20,50 }, x, y);
+						id++;
+					}
+					if (rand() % 1200 > 1150) {
+						emit unitCreatedAt(new Tower{ id,1000,20,50 }, x, y);
+						id++;
+					}
 				}
-				if (rand() % 1200 > 1150) {
-					emit unitCreatedAt(new Tower{ id,1000,20 }, x, y);
-					id++;
+				else {
+					emit tileCreated(new WaterTile{ false }, x, y);
+					if (rand() % 1200 > 1150) {
+						emit unitCreatedAt(new Galleon{ id,100,20,50 }, x, y);
+						id++;
+					}
 				}
 			}
 		}
+
 	}
 
 

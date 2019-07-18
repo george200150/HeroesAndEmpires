@@ -26,13 +26,16 @@ public:
 	}
 
 	void deleteUnit(AbstractUnit* unit) {
-		vector<AbstractUnit*> copy;
-		for (const auto& u : this->units) {//remove_if - like algorithm
-			if (u->getId() != unit->getId()) {
-				copy.push_back(u);
+		int i = 0;
+		for (auto& u : this->units) {
+			if (u->getId() == unit->getId()) {
+				auto temp = this->units.at(i);
+				this->units.at(i) = new EmptyUnit{ -1,-1,-1,-1,"-1" };
+				delete temp;
+				break;
 			}
+			i++;
 		}
-		this->units = copy;
 	}
 
 	void selectUnit(AbstractUnit* unit) const {

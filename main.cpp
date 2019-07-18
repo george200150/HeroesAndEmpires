@@ -7,7 +7,8 @@ int main(int argc, char *argv[]){
 	QApplication a(argc, argv);
 
 	GameEngine* engine = new GameEngine{};
-	GAME* view = new GAME{ engine };
+	Map* map = new Map{};
+	GAME* view = new GAME{ engine, map };
 	
 	
 	view->show();
