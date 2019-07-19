@@ -182,7 +182,7 @@ private:
 
 	vector<Player> players;
 
-	QGraphicsRectItem* leftWall;
+	/*QGraphicsRectItem* leftWall;
 	QGraphicsRectItem* rightWall;
 	QGraphicsRectItem* topWall;
 	QGraphicsRectItem* bottomWall;
@@ -204,10 +204,10 @@ private:
 		bottomWall->setBrush(br);
 		scene->addItem(bottomWall);
 
-	}
+	}*/
 
-	void createPlayer(string name) {//minimalistic
-		players.push_back(Player{ name });
+	void createPlayer(string name, Civilisation* civ, string color) {
+		players.push_back(Player{ name, civ, color });
 	}
 
 
@@ -228,6 +228,16 @@ private:
 	}
 
 	
+	/*
+	THIS METHOD IS INVOKED ONLY AFTER THE CONSTRUCTOR CREATES THE GAME AND GAME ENGINE
+	AN THE GAME ENGINE CLOCK STARTS TICKING.
+
+	THIS MEANS THAT WE NEED A RELATIVE BIG DELAY TO WAIT FOR ALL THE UNITS TO BE GENERATED
+	SO THAT WE CAN WORK WITH THEM CORRECTLY.
+
+	-I NEED A SIGNAL TO NOTIFY US WHEN ALL THE UNITS HAVE BEEN CREATED - 
+	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	*/
 	void addUnit(AbstractUnit* unit, int x, int y) {
 		
 		//auto temp = this->unitMatrix.at(30 * y + x);
@@ -245,7 +255,7 @@ private:
 	void changeTurn() {
 		QMessageBox::information(this, "Info", "TURN TIME EXPIRED!");
 		this->map->deleteSelection();
-		this->scene->removeItem(SelectedMark);//i do not know if it can throw or not...
+		this->scene->removeItem(SelectedMark);//I do not know if it can throw or not...
 
 		//all actions undergone must be stopped!
 
@@ -257,6 +267,8 @@ private:
 		
 		//advanceGame invoked every time
 		QObject::connect(engine, &GameEngine::turnFinished, this, &GAME::changeTurn);
+
+		QObject::connect(engine, &GameEngine::allUnitsGenerated, this, &GAME::InitUnitColours);
 
 		QObject::connect(engine, &GameEngine::tick, this, &GAME::advanceGame);
 
@@ -308,6 +320,8 @@ private:
 	*/
 
 	void mousePressEvent(QMouseEvent* ev) override {
+		
+
 		int x = ev->pos().x();
 		int y = ev->pos().y();
 
@@ -450,18 +464,107 @@ private:
 
 	}
 
+
+
+
+
+
+
+	/*
+	THIS HAS TO BE THE DEFAULT OPTION FOR RENDERING PLAYER UNITS.
+	I MUST DELETE ANY OTHER VERSION OF CREATING NONCOLOR ILLUSTRATION OF UNITS.
+	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!
+	*/
+	void InitUnitColours() {
+		Civilisation* britons= new Civilisation{ "Britons" };
+		Civilisation* romans= new Civilisation{ "Romans" };
+		createPlayer("George200150", britons, "BLUE");
+		createPlayer("LordOfUltima98", romans, "RED");
+
+		//AbstractUnit* villager = new Villager{ 1,100,20,90 };
+		//this->players.at(0).addUnit(villager, 25, 15);
+		////this->addUnit(villager, 25, 15);
+		//this->engine->unitCreatedAt(new Villager{ 1,100,20,90 }, 10, 10);
+
+
+		//villager->setPos(25 * 50, 15 * 50);
+		//scene->addItem(villager);
+		//	!!!!	!!!!	!!!!	!!!!	!!!! VITAL VITAL VITAL (sa apara pe ecran)
+
+
+		//villager = new Villager{ 2,100,20,90 };
+		//this->players.at(0).addUnit(villager, 9, 9);
+		//this->addUnit(villager, 9, 9);
+
+		//AbstractUnit* tower = new Tower{ 3,500,20,75 };
+		//this->players.at(0).addUnit(tower, 8, 8);
+		//this->addUnit(tower, 8, 8);
+
+		for (int x = 0; x < 30; x++)
+			for (int y = 0; y < 20; y++) {
+				if (19 * x < -29 * y + 551) {
+					players.at(0).addUnit(this->map->getUnitAt(x, y), x, y);
+
+				}
+				else {
+					players.at(1).addUnit(this->map->getUnitAt(x, y), x, y);
+				}
+			}
+
+		/*AbstractUnit* unit = new HorseArcher{ 4,200,40,80 };
+		this->players.at(1).addUnit(unit);
+		this->addUnit(unit, 0, 0);
+		unit->setPos(0, 0);
+		scene->addItem(unit);*/
+
+		setPlayerColours();// WTF AM I SUPPOSED TO DO?!
+	}
+
+	void setPlayerColours() {
+		for (auto& pl : this->players) {
+			pl.setColourForUnits();
+			
+
+		}
+		int x = 0;
+		int y = 0;
+		for (auto& pos : this->map->getAllUnits()) {
+			this->scene->removeItem(pos);
+			for (auto& player : this->players) {
+				auto unit = player.getAllUnits().at(30 * y + x);
+				if (unit->getId() != -1) {
+					this->scene->addItem(unit);
+					break;
+				}
+			}
+			
+			x++;
+			if (x == 30) {
+				x = 0;
+				y++;
+			}
+		}
+	}
+
+
 public:
 	GAME(GameEngine* engine, Map* map) :engine{ engine }, map{ map } {
 		setMouseTracking(true);
 		initScene();
-		initEnclosingWals();
-		createPlayer("Wallace");
+		//initEnclosingWals(); - NO NEED FOR THAT ANYMORE
+//		createPlayer("Wallace");
 
 		initSignalSlots();
 
 		//this->SelectedMark->setBrush(QBrush(QColor(224, 195, 30, 100)));
 		this->SelectedMark->setBrush(QBrush(QColor(255, 255, 0, 100)));
 		this->SelectedMark->setRect(0, 0, 50, 50);
+
+		//Civilisation* britons = new Civilisation{ "Britons" };
+		//Civilisation* romans = new Civilisation{ "Romans" };
+		//createPlayer("George200150", britons, "BLUE");
+		//createPlayer("LordOfUltima98", romans, "RED");
+
 	}
 };
 

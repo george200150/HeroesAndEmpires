@@ -31,6 +31,10 @@ private:
 
 public:
 
+	vector<AbstractUnit*> getAllUnits() {
+		return this->unitMatrix;
+	}
+
 	vector<int> getXYbyUnit(AbstractUnit* unit) const {
 		vector<int> xy;
 		int x = 0;
@@ -219,6 +223,7 @@ public:
 		int x = xy.at(0);
 		int y = xy.at(1);
 		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1" };
+		this->tileMatrix.at(30 * y + x)->unoccupy();
 	}
 };
 

@@ -3,10 +3,9 @@
 #include <QBrush>
 #include <string>
 using std::string;
-
+using std::string;
 
 #include "AbstractAction.h"
-//#include "Player.h"
 
 
 class AbstractUnit : public QGraphicsRectItem {
@@ -19,13 +18,14 @@ protected:
 	int baseHitChance;
 	int currentHitChance;
 	string type;
+	string photo;
 	//int totalCapacity;
 	//int occupiedCapacity;
 	//bool canFortify;
 	//this implies one more inheritance, as there must be a vector of units on each tile...
 	//(composite pattern)
 
-	//Player* owner;
+	//Player* owner;- i could easily search in all players @ (x,y) for that unit. if found, there you have the owner.
 
 	vector<AbstractAction*> actions;// - this is gonna be my next headache for this week
 public:
@@ -36,6 +36,8 @@ public:
 		currentHitChance = hitChance;
 	}
 
+	virtual string getPhoto() const = 0;
+	virtual void setPhoto(string newPhoto) = 0;
 	virtual vector<AbstractAction*> getActions() = 0;
 	//virtual Player* getOwner() = 0;	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!
 	virtual bool canMove() const = 0;
@@ -67,6 +69,8 @@ public:
 	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
 	}
 
+	virtual string getPhoto() const override = 0;
+	virtual void setPhoto(string newPhoto) override = 0;
 	virtual vector<AbstractAction*> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
@@ -95,6 +99,8 @@ public:
 	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
 	}
 
+	virtual string getPhoto() const override = 0;
+	virtual void setPhoto(string newPhoto) override = 0;
 	virtual vector<AbstractAction*> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
@@ -122,6 +128,8 @@ public:
 	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
 	}
 
+	virtual string getPhoto() const override { return "-1"; }
+	virtual void setPhoto(string newPhoto) override {}
 	virtual vector<AbstractAction*> getActions() override { vector<AbstractAction*> v;  return v; }
 	virtual bool canMove() const override { return false; }
 	virtual string getType() const override { return "-1"; }
@@ -144,7 +152,9 @@ class Villager : public AbstractCharacter {
 protected:
 public:
 	Villager(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
-		setBrush(QBrush(QImage("villager.fw.png")));
+		this->photo = "villager";
+
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		AbstractAction* action;
 		action = new AbstractAction{ "ATTACK",2 };
 		this->actions.push_back(action);
@@ -156,6 +166,13 @@ public:
 		this->actions.push_back(action);
 		action = new AbstractAction{ "REPAIR",3 };
 		this->actions.push_back(action);
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
 	}
 
 	vector<AbstractAction*> getActions() override {
@@ -231,10 +248,18 @@ class Tower : public AbstractBuilding {
 protected:
 public:
 	Tower(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
-		setBrush(QBrush(QImage("tower.fw.png")));
+		this->photo = "tower";
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		AbstractAction* action;
 		action = new AbstractAction{ "ATTACK",1 };
 		this->actions.push_back(action);
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
 	}
 
 	vector<AbstractAction*> getActions() override {
@@ -308,7 +333,8 @@ class Galleon : public AbstractCharacter {
 protected:
 public:
 	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER" } {
-		setBrush(QBrush(QImage("galleon.fw.png")));
+		this->photo = "galleon";
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		AbstractAction* action;
 		action = new AbstractAction{ "ATTACK",2 };
 		this->actions.push_back(action);
@@ -316,6 +342,101 @@ public:
 		this->actions.push_back(action);
 		action = new AbstractAction{ "DOCK",1 };
 		this->actions.push_back(action);
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
+	}
+
+	vector<AbstractAction*> getActions() override {
+		return this->actions;
+	}
+
+	virtual bool canMove() const override { return true; }
+
+	string getType() const override {
+		return this->type;
+	}
+
+	int getId() const override {
+		return this->id;
+	}
+
+	int getBaseHealth() const override {
+		return this->baseHealth;
+	}
+
+	void modifyBaseHealth(int newBH)  override {
+		this->baseHealth = newBH;
+	}
+
+
+	int getCurrentHealth() const  override {
+		return this->currentHealth;
+	}
+
+	void modifyCurrentHealth(int newCH)  override {
+		this->currentHealth = newCH;
+	}
+
+
+	int getBaseDamagePerHit() const  override {
+		return this->BaseDamagePerHit;
+	}
+
+	void modifyBaseDamagePerHit(int newBDPH)  override {
+		this->BaseDamagePerHit = newBDPH;
+	}
+
+
+	int getCurrentDamagePerHit() const  override {
+		return this->currentDamagePerHit;
+	}
+
+	void modifyCurrentDamagePerHit(int newCDPH)  override {
+		this->currentDamagePerHit = newCDPH;
+	}
+
+
+	int getBaseHitChance() const override {
+		return this->baseHitChance;
+	}
+	void modifyBaseHitChance(int newBHC) override {
+		this->baseHitChance = newBHC;
+	}
+
+
+	int getCurrentHitChance() const override {
+		return this->currentHitChance;
+	}
+	void modifyCurrentHitChance(int newCHC) override {
+		this->currentHitChance = newCHC;
+	}
+};
+
+
+
+class HorseArcher : public AbstractCharacter {
+protected:
+public:
+	HorseArcher(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
+		this->photo = "horse_archer";
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
+		AbstractAction* action;
+		action = new AbstractAction{ "ATTACK",2 };
+		this->actions.push_back(action);
+		action = new AbstractAction{ "MOVE",1 };
+		this->actions.push_back(action);
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
 	}
 
 	vector<AbstractAction*> getActions() override {

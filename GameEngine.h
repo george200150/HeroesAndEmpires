@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QTimer>
 
+//#include "Player.h"
+
 #include <AbstractUnit.h>
 #include <AbstractTiles.h>
 
@@ -12,6 +14,7 @@ class GameEngine : public QObject {
 	int time;
 
 signals:
+	void allUnitsGenerated();
 	void gameFinished(bool win);//might change due to the number of players > 1
 	void unitAttacked(AbstractUnit* Attacker, AbstractUnit* Defender);
 	void unitMissed(AbstractUnit* Attacker);
@@ -85,25 +88,34 @@ public:
 			for (int x = 0; x < board_w; x++) {
 				if (abs(19 * x + 29 * y - 551) >= 100) {
 					emit tileCreated(new GrassTile{ false }, x, y);
-					if (rand() % 1200 > 1150) {
+					if (rand() % 100 > 98) {
 						emit unitCreatedAt(new Villager{ id,100,20,90 }, x, y);
 						id++;
 					}
-					if (rand() % 1200 > 1150) {
+					if (rand() % 100 > 98) {
 						emit unitCreatedAt(new Tower{ id,1000,20,75 }, x, y);
+						id++;
+					}
+					
+					if (rand() % 100 > 98) {
+						emit unitCreatedAt(new HorseArcher{ id,200,40,80 }, x, y);
 						id++;
 					}
 				}
 				else {
 					emit tileCreated(new WaterTile{ false }, x, y);
 					if (rand() % 1200 > 1150) {
-						emit unitCreatedAt(new Galleon{ id,100,20,75 }, x, y);
+						emit unitCreatedAt(new Galleon{ id,100,30,75 }, x, y);
 						id++;
+
+						/*
+						ONLY THE PLAYER CAN CREATE UNITS NOW !!!
+						*/
 					}
 				}
 			}
 		}
-
+		emit allUnitsGenerated();
 	}
 
 

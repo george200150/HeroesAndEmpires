@@ -48,13 +48,16 @@ public:
 	GrassTile(bool occupied) : AbstractTile{ true, occupied } {
 		int option = rand();
 		if (option % 3 == 0) {
-			setBrush(QBrush(QColor(50, 137, 48, 255)));
+			setBrush(QBrush(QColor(129, 240, 181, 100)));
+			//setBrush(QBrush(QColor(50, 137, 48, 255)));
 		}
 		else if (option % 3 == 1) {
-			setBrush(QBrush(QColor(128, 195, 66, 255)));
+			setBrush(QBrush(QColor(122, 240, 146, 100)));
+			//setBrush(QBrush(QColor(128, 195, 66, 255)));
 		}
 		else {
-			setBrush(QBrush(QColor(0, 99, 37, 255)));
+			setBrush(QBrush(QColor(70, 219, 122, 100)));
+			//setBrush(QBrush(QColor(0, 99, 37, 255)));
 		}
 
 
@@ -91,10 +94,12 @@ public:
 	WaterTile(bool occupied) : AbstractTile{ false, occupied } {
 		int option = rand();
 		if (option % 2 == 0) {
-			setBrush(QBrush(QColor(20, 20, 140, 255)));
+			setBrush(QBrush(QColor(109, 197, 237,100)));
+			//setBrush(QBrush(QColor(20, 20, 140, 255)));
 		}
 		else {
-			setBrush(QBrush(QColor(20, 170, 255, 255)));
+			setBrush(QBrush(QColor(109, 171, 237, 100)));
+			//setBrush(QBrush(QColor(20, 170, 255, 255)));
 		}
 	}
 
