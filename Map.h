@@ -21,7 +21,7 @@ private:
 	vector< AbstractUnit*> unitMatrix;
 
 	int player_turn_count, player_count;
-	int base_money_per_turn;
+	int base_money_per_turn, current_money_per_turn;
 	string selectedAction;
 
 	AbstractTile* SelectedTile = nullptr;
@@ -55,7 +55,16 @@ public:
 		return xy;
 	}
 
-	Map() { initialiseFreeSpace(); this->selectedAction = "NONE"; }
+	Map() {
+		initialiseFreeSpace();
+		this->selectedAction = "NONE";
+		this->base_money_per_turn = 5;
+		this->current_money_per_turn = 5;
+		this->player_turn_count = 0;
+		this->player_count = 0;
+	}
+
+
 
 	void setSelectedAction(string action) {
 		this->selectedAction = action;
@@ -101,10 +110,24 @@ public:
 	int getPlayerCount() const {
 		return this->player_count;
 	}
+	int getPlayerIdToBeActive() const {
+		return this->player_turn_count % this->player_count;
+	}
 	int getBaseMoneyPerTurn() const {
 		return this->base_money_per_turn;
 	}
-
+	int getCurrentMoneyLeft() const {
+		return this->current_money_per_turn;
+	}
+	void incrementPlayerCount() {
+		this->player_count++;
+	}
+	//void decrementPlayerCount() {
+	//	this->player_count--;
+	//}
+	void payActionExecution(/*AbstractAction* act + etc altele...*/) {
+		this->current_money_per_turn-=1;// -= act.getCost() * Unit.getBaseMultiplier() - eventual...;
+	}
 
 	int getSelectedX() const {
 		return this->selectedX;
@@ -161,12 +184,13 @@ public:
 	}
 
 	void changeTurn() {
-		//QMessageBox::information(this, "Info", "TURN TIME EXPIRED!");/*in GAME*/
-
+		
 		//all actions undergone must be stopped!
 
 		player_turn_count++;
-		base_money_per_turn = 1 + player_count / player_count;
+		//base_money_per_turn = 1 + player_turn_count / player_count;
+		base_money_per_turn++;
+		current_money_per_turn = base_money_per_turn;
 	}
 
 

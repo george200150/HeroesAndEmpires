@@ -172,6 +172,8 @@ public:
 class GAME: public QGraphicsView{
 private:
 
+	int playerId;
+
 	Map* map;
 
 	QGraphicsRectItem* SelectedMark = new QGraphicsRectItem;// (to be deleted in the destructor)	!!!!	!!!!	!!!!	!!!!
@@ -181,6 +183,8 @@ private:
 	QGraphicsScene* scene;
 
 	vector<Player> players;
+
+	InfoWindow* wndw = nullptr;
 
 	/*QGraphicsRectItem* leftWall;
 	QGraphicsRectItem* rightWall;
@@ -207,7 +211,9 @@ private:
 	}*/
 
 	void createPlayer(string name, Civilisation* civ, string color) {
-		players.push_back(Player{ name, civ, color });
+		players.push_back(Player{ playerId, name, civ, color });
+		this->map->incrementPlayerCount();
+		this->playerId++;
 	}
 
 
@@ -255,7 +261,11 @@ private:
 	void changeTurn() {
 		QMessageBox::information(this, "Info", "TURN TIME EXPIRED!");
 		this->map->deleteSelection();
-		this->scene->removeItem(SelectedMark);//I do not know if it can throw or not...
+		this->scene->removeItem(SelectedMark);
+		//if (this->wndw != nullptr) {
+		//	wndw->close();
+		//}//this is gonna crash the programme... I need to see when the window is closed
+		//so that I can assign the nullptr value to class attribute wndw...
 
 		//all actions undergone must be stopped!
 
@@ -319,6 +329,15 @@ private:
 
 	*/
 
+	bool SelectedUnitBelongsToActivePlayer(int x, int y) const {//function uses class parameter turn_count.
+		for (auto player : this->players) {
+			if (player.getPlayerId() == this->map->getPlayerIdToBeActive()  && player.getAllUnits().at(30 * y + x)->getId() != -1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	void mousePressEvent(QMouseEvent* ev) override {
 		
 
@@ -343,7 +362,7 @@ private:
 		else if (ev->button() == Qt::LeftButton) {
 
 			if (this->map->wasSelectionNULL()) {
-				if (this->map->UnitExistsInSelected(localSelectedUnit)) {
+				if (this->map->UnitExistsInSelected(localSelectedUnit) /*AND IT BELONGS TO THE ACTIVE PLAYER*/ && SelectedUnitBelongsToActivePlayer(x,y)) {
 					this->map->setSelection(localSelectedTile, localSelectedUnit, x, y);
 					this->SelectedMark->setPos(x * 50, y * 50);
 					this->scene->addItem(SelectedMark);
@@ -358,6 +377,14 @@ private:
 					this->scene->removeItem(SelectedMark);
 					this->map->deleteSelection();
 				}
+				//else if (!this->map->wasSelectionNULL() && this->map->UnitExistsInSelected(localSelectedUnit) && !SelectedUnitBelongsToActivePlayer(x, y)) {
+				//	/*ignore selection if selected enemy unit*/
+
+				//	//UNFORTUNATELY, I THINK I MISSED TO SET SOME ATTRIBUTES TO THE TILES,
+				//	//AS THERE ARE PROBLEMS WHEN EXECUTING MOVE ACTION AND SELECTING SAME UNIT...
+				//}
+				//THERE MUST BE AN "ELSE IF" HERE, BECAUSE... YOU WILL SEE... :) *HACKS ENEMY*
+				//still, there are flaws... I MUST repair this... move function is very unusual...
 				else {
 					string action = this->map->getSelectedAction();
 					if (action == "NONE") {
@@ -372,13 +399,14 @@ private:
 							this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
 							this->map->deleteSelection();
 							this->scene->removeItem(SelectedMark);
-
+							this->map->payActionExecution(/*the actual action*/);
 						}
 						else if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && !localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "WATER") {
 							this->map->moveAction(localSelectedTile, x, y);
 							this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
 							this->map->deleteSelection();
 							this->scene->removeItem(SelectedMark);
+							this->map->payActionExecution(/*the actual action*/);
 						}
 						else {
 							QMessageBox::warning(this, "Permission Warning", "YOU CANNOT EXECUTE THAT ACTION!");
@@ -394,6 +422,8 @@ private:
 							}
 							this->map->deleteSelection();
 							this->scene->removeItem(SelectedMark);
+							this->map->payActionExecution(/*the actual action*/);
+
 							if (this->map->getActionSuccess()) {
 								QMessageBox::information(this, "SUCCESS!", "YOU HIT 'EM HARD!");
 							}
@@ -401,7 +431,7 @@ private:
 								QMessageBox::information(this, "OH NO!", "YOU MISSED!");
 							}
 						}
-					}//enf of attack
+					}//end of attack
 				}
 			}
 		}
@@ -417,7 +447,7 @@ private:
 		auto tile = getTileAt(x, y);
 		auto unit = getUnitAt(x, y);
 
-		InfoWindow* wndw = new InfoWindow{ tile, unit, x, y };
+		wndw = new InfoWindow{ tile, unit, x, y };
 		wndw->show();
 	}
 
@@ -427,20 +457,23 @@ private:
 	//	//player->setPos(x, player->y());
 	//}
 
-	//void keyPressEvent(QKeyEvent* ev) override {
-	//	if (ev->key() == Qt::Key_Left) {
-	//		//player->moveX(-15);
-	//	}
-	//	else if (ev->key() == Qt::Key_Right) {
-	//		//player->moveX(15);
-	//	}
-	//	else if (ev->key() == Qt::Key_Space) {
-	//		//restart
-	//	}
-	//}
+	void keyPressEvent(QKeyEvent* ev) override {
+		if (ev->key() == Qt::Key_End) {
+			this->engine->forceTurnFinish();
+		}
+		else if (ev->key() == Qt::Key_Right) {
+			//player->moveX(15);
+		}
+		else if (ev->key() == Qt::Key_Space) {
+			//restart
+		}
+	}
 
 	void advanceGame() {
 		int i;
+		if (this->map->getCurrentMoneyLeft() == 0){
+			this->engine->forceTurnFinish();
+		}
 		//for (i = 0; i < this->map->getPlayerCount(); i++) {/*MIGHT HAVE TO GO... SOME CALCULATIONS COULD BE DONE IN SERVICE...*/
 		//	if (this->map->getPlayerTurnCount() % this->map->getPlayerCount() == i) {
 		//		auto playerUnits = this->players.at(i).getAllUnits();
@@ -564,7 +597,7 @@ public:
 		//Civilisation* romans = new Civilisation{ "Romans" };
 		//createPlayer("George200150", britons, "BLUE");
 		//createPlayer("LordOfUltima98", romans, "RED");
-
+		this->playerId = 0;
 	}
 };
 

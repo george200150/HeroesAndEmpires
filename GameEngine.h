@@ -70,8 +70,13 @@ public:
 		emit unitMoved(Unit, Source, Destination);//i don't know if still necessary
 	}
 
+	void forceTurnFinish() {
+		time = 0;
+		emit turnFinished();
+	}
+
 	bool isTurnFinished() {
-		return time % 120000==0;//2 minutes/turn
+		return time % 1200==0;//2 minutes/turn
 	}
 
 	bool isGameFinished() {
@@ -134,7 +139,7 @@ public:
 			}
 		});
 		//generate timeot signal every ms
-		timer.start(1);
+		timer.start(100);
 	}
 
 };

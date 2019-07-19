@@ -15,7 +15,7 @@ private:
 public:
 	Player(string name) : name{ name }, civ{ new Civilisation{"Gaia"} } {this->color = "gray"; initialiseFreeSpace(); }
 	Player(string name, Civilisation* civ) : name{ name }, civ{ civ } {this->color = "gray"; initialiseFreeSpace(); }
-	Player(string name, Civilisation* civ, string color) : name{ name }, civ{ civ }, color{ color } { initialiseFreeSpace(); }
+	Player(int id, string name, Civilisation* civ, string color) : id{ id }, name { name }, civ{ civ }, color{ color } { initialiseFreeSpace(); }
 
 	void initialiseFreeSpace() {
 		int id = -1;
@@ -28,6 +28,10 @@ public:
 				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance,type };
 				this->units.push_back(unit);
 			}
+	}
+
+	int getPlayerId() const {
+		return this->id;
 	}
 
 	void setColourForUnits() {
