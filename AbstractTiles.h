@@ -4,22 +4,71 @@
 #include <string>
 using std::string;
 
+
+/*
+Class representing a 50 by 50 square on the map.
+This is one of the tiles belonging to a the game.
+The tile has properties if it is crossable or occupied.
+*/
 class AbstractTile : public QGraphicsRectItem {
 protected:
-	bool crossable;
-	bool occupied;
-	string image;
+	bool crossable;//if player units can stand on it
+	bool occupied;//if there is an unit on the tile
+	string image;// this is kinda useless...
 	//vector<Player> explored; - - -  maybe a string is enough *map<string,bool> explored* - the string uniquely identifies the player (id)
 public:
+
+	/*
+	Constructor of the AbstractTile class. This method sets the crossable and occupied attributes.
+	Also, it automatically sets the shape of the unit to a 50x50 square.
+	*/
 	AbstractTile(bool crossable, bool occupied) :crossable{ crossable }, occupied{ occupied } {
 		this->image = "NULL";
 		setRect(0, 0, 50, 50);
 	}
 
+
+
+	/*
+	Method that returns the type of the tile.
+	The type is whether "GRASS", "WATER" or "EMPTY".
+	The attribute type is "EMPTY" when the map is being created, and the vectors of units and tiles
+	are empty. We need to do this in order to access any element of the so-called "matrix".
+	When accessing an element @ [i][j] we call vector.at(width * y + x) we need to have an existing value,
+	else memory access violation happens.
+	*/
 	virtual string getType() const = 0;
+
+
+
+	/*
+	Method that returns whether the tile can be crossed by LAND UNITS or not.
+	This value is used when allowing LAND and WATER units to advance on the map.
+	*/
 	virtual bool isCrossable() const = 0;
+
+
+
+	/*
+	Method that returns whether the tile is occupied or not.
+	This value is used when deciding if a tile can be occupied by an unit or not.
+	*/
 	virtual bool isOccupied() const = 0;
+
+
+	
+	/*
+	Method that marks the tile as occupied
+	PRECONDITION: the tile MUST NOT be occupied already.
+	*/
 	virtual void occupy() = 0;
+
+
+
+	/*
+	Method that marks the tile as free
+	PRECONDITION: the tile MUST be occupied already.
+	*/
 	virtual void unoccupy() = 0;
 
 	virtual ~AbstractTile() = default;

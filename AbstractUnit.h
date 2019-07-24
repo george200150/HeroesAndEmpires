@@ -8,17 +8,22 @@ using std::string;
 #include "AbstractAction.h"
 
 
+/*
+Class representing a 50 by 50 square on the map.
+This is one of the units belonging to a player playing the game.
+The unit has health, damage, hit chance visible for the user.
+*/
 class AbstractUnit : public QGraphicsRectItem {
 protected:
-	int id;
-	int baseHealth;
-	int currentHealth;
-	int BaseDamagePerHit;
-	int currentDamagePerHit;
-	int baseHitChance;
-	int currentHitChance;
-	string type;
-	string photo;
+	int id;//UNIQUE
+	int baseHealth;//health @ spawn moment
+	int currentHealth;//health along unit's lifespan
+	int BaseDamagePerHit;//damage/hit @ spawn moment
+	int currentDamagePerHit;//damage/hit along unit's lifespan
+	int baseHitChance;//hit chance @ spawn moment
+	int currentHitChance;// hit chance along unit's lifespan
+	string type;//LAND or WATER
+	string photo;//only the name of the unit (should be the unit's name)
 	//int totalCapacity;
 	//int occupiedCapacity;
 	//bool canFortify;
@@ -29,6 +34,11 @@ protected:
 
 	vector<AbstractAction*> actions;// - this is gonna be my next headache for this week
 public:
+
+	/*
+	Constructor of the AbstractUnit class. This method sets the id, hp, damage, hit chance and the type.
+	Also, it automatically sets the shape of the unit to a 50x50 square.
+	*/
 	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type) : id{ id }, baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit }, baseHitChance{ hitChance }, type{ type } {
 		setRect(0, 0, 50, 50);
 		currentHealth = baseHealth;
@@ -36,24 +46,149 @@ public:
 		currentHitChance = hitChance;
 	}
 
+	/*
+	Method that returns as a string the name of the photo of each object.
+	The name DOES NOT contain the .extension so that it represents only the base word
+	that is going the first string concatenated with the colour of the player.
+	This is used when displaying different users' units on the map.
+	*/
 	virtual string getPhoto() const = 0;
+
+
+
+	/*
+	Method that sets the name of the photo of each object.
+	PRECONDITION: the name MUST NOT include the .extension
+	This is used when concatenating the base name with the player colour.
+	*/
 	virtual void setPhoto(string newPhoto) = 0;
+
+
+	/*
+	this may go soon...
+	*/
 	virtual vector<AbstractAction*> getActions() = 0;
 	//virtual Player* getOwner() = 0;	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!
+
+
+
+	/*
+	Method that returns a boolean value representing the capability
+	of the unit to be moved on the map.
+	*/
 	virtual bool canMove() const = 0;
+
+
+	/*
+	Method that returns as a string the type of the unit.
+	The type can be whether: "LAND" or "WATER", both in caps.
+	*/
 	virtual string getType() const = 0;
+
+
+
+	/*
+	Method that returns the unique identifier of the unit.
+	*/
 	virtual int getId() const = 0;
+
+
+
+	/*
+	Method that returns the base health of the unit.
+	This value CAN ONLY BE MODIFIED by when an upgrade is completed.
+	*/
 	virtual int getBaseHealth() const = 0;
+
+
+
+	/*
+	Method that modifies the base health of each unit that is going to spawn from now on.
+	This happens ONLY when an upgrade is completed.
+
+	Every unit present on the map will have this base health, and the current health will be
+	increased accordingly to the base health gain.
+	
+	***(this information must be stored by each player so that the ones without the upgrades cannot
+	generate more powerful units.)***
+	*/
 	virtual void modifyBaseHealth(int newBH) = 0;
+
+
+
+	/*
+	Method that returns an integer representing the current health of the unit
+	This value will range from 0 to baseHealth. When it reaches a value <=0 the unit is dead.
+	*/
 	virtual int getCurrentHealth() const = 0;
+
+
+
+	/*
+	Method that changes the value of the current health.
+	This method is called when the unit is ATTACKED or HEALED.
+	*/
 	virtual void modifyCurrentHealth(int newCH) = 0;
+
+
+
+	/*
+	Method that returns an integer representing the damage dealt by the unit / 1 attack action.
+	*/
 	virtual int getBaseDamagePerHit() const = 0;
+
+
+
+
+	/*
+	Method that changes the value of the damage / 1 attack action.
+	This value CAN ONLY BE MODIFIED by when an upgrade is completed.
+	*/
 	virtual void modifyBaseDamagePerHit(int newBDPH) = 0;
+
+
+
+	/*
+	Method that returns an integer representing the current damage / 1 attack action.
+	***(...at the moment it cannot differ from the base value...)***
+	*/
 	virtual int getCurrentDamagePerHit() const = 0;
+
+
+
+	/*
+	Method that changes the unit's current damage / 1 attack action.
+	*/
 	virtual void modifyCurrentDamagePerHit(int newCDPH) = 0;
+
+
+
+	/*
+	Method that returns an integer representing the hit change of the unit.
+	This value can take values from 0 (representing certain miss) to 100 (representing certain hit).
+	*/
 	virtual int getBaseHitChance() const = 0;
+
+
+
+	/*
+	Method that changes the hit chance of the unit.
+	This value CAN ONLY BE MODIFIED by when an upgrade is completed.
+	*/
 	virtual void modifyBaseHitChance(int newBHC) = 0;
+
+
+
+	/*
+	Method that returns an integer representing the current hit chance of the unit.
+	*/
 	virtual int getCurrentHitChance() const = 0;
+
+
+
+	/*
+	Method that changes the current hit chance of the unit.
+	*/
 	virtual void modifyCurrentHitChance(int newCHC) = 0;
 
 	virtual ~AbstractUnit() = default;
