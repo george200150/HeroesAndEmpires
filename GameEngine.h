@@ -5,8 +5,8 @@
 
 //#include "Player.h"
 
-#include <AbstractUnit.h>
-#include <AbstractTiles.h>
+#include "AbstractUnit.h"
+#include "AbstractTiles.h"
 
 class GameEngine : public QObject {
 	Q_OBJECT;
