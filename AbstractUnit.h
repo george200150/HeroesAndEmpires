@@ -2,10 +2,11 @@
 #include <QGraphicsRectItem>
 #include <QBrush>
 #include <string>
+#include <vector>
 using std::string;
-using std::string;
+using std::vector;
 
-#include "AbstractAction.h"
+/*#include "AbstractAction.h" THIS HAS GONE*/
 
 
 /*
@@ -24,27 +25,52 @@ protected:
 	int currentHitChance;// hit chance along unit's lifespan
 	string type;//LAND or WATER
 	string photo;//only the name of the unit (should be the unit's name)
+	
+	float speed;
+	int range;
 	//int totalCapacity;
 	//int occupiedCapacity;
 	//bool canFortify;
 	//this implies one more inheritance, as there must be a vector of units on each tile...
 	//(composite pattern)
-
-	//Player* owner;- i could easily search in all players @ (x,y) for that unit. if found, there you have the owner.
-
-	vector<AbstractAction*> actions;// - this is gonna be my next headache for this week
+	vector<string> actions;
 public:
 
 	/*
 	Constructor of the AbstractUnit class. This method sets the id, hp, damage, hit chance and the type.
 	Also, it automatically sets the shape of the unit to a 50x50 square.
 	*/
-	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type) : id{ id }, baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit }, baseHitChance{ hitChance }, type{ type } {
+	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type, float speed, int range) :
+		id{ id }, baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit },
+		baseHitChance{ hitChance }, type{ type }, speed{ speed }, range{ range }{
 		setRect(0, 0, 50, 50);
 		currentHealth = baseHealth;
 		currentDamagePerHit = damagePerHit;
 		currentHitChance = hitChance;
 	}
+
+	/*
+	Method that returns an integer representing the speed of the unit.
+	The speed determines how many tiles the unit can be moved at the same price as other units.
+	i.e. :
+	speed = 1   default.
+	speed = 2   unit can go twice more than default in one turn.
+	speed = 0.5 unit is twice as slower as the default speed.
+	*/
+	virtual float getSpeed() const = 0;
+
+
+	
+
+	/*
+	Method that returns an integer representing the range of the unit.
+	The range determines how far the unit can attack (interact with) other units.
+	the value is represented in tiles.
+	*/
+	virtual int getRange() const = 0;
+
+
+
 
 	/*
 	Method that returns as a string the name of the photo of each object.
@@ -65,10 +91,9 @@ public:
 
 
 	/*
-	this may go soon...
+	
 	*/
-	virtual vector<AbstractAction*> getActions() = 0;
-	//virtual Player* getOwner() = 0;	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!
+	virtual vector<string> getActions() = 0;
 
 
 
@@ -198,15 +223,16 @@ public:
 
 class AbstractCharacter : public AbstractUnit {
 protected:
-	//int speed; - this gonna be my first headache for today
-	//int range;
 public:
-	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
+	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
 	}
 
+	virtual float getSpeed() const override = 0;
+	virtual int getRange() const override = 0;
 	virtual string getPhoto() const override = 0;
 	virtual void setPhoto(string newPhoto) override = 0;
-	virtual vector<AbstractAction*> getActions() override = 0;
+	virtual vector<string> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
 	virtual int getId() const override = 0;
@@ -229,14 +255,16 @@ public:
 
 class AbstractBuilding : public AbstractUnit {
 protected:
-	//int range;
 public:
-	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
+	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
 	}
 
+	virtual float getSpeed() const override { return 0; };
+	virtual int getRange() const override = 0;
 	virtual string getPhoto() const override = 0;
 	virtual void setPhoto(string newPhoto) override = 0;
-	virtual vector<AbstractAction*> getActions() override = 0;
+	virtual vector<string> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
 	virtual int getId() const override= 0;
@@ -260,12 +288,15 @@ public:
 class EmptyUnit : public AbstractUnit {
 protected:
 public:
-	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
+	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
 	}
 
+	virtual float getSpeed() const override { return -1; }
+	virtual int getRange() const override { return -1; };
 	virtual string getPhoto() const override { return "-1"; }
 	virtual void setPhoto(string newPhoto) override {}
-	virtual vector<AbstractAction*> getActions() override { vector<AbstractAction*> v;  return v; }
+	virtual vector<string> getActions() override { vector<string> v;  return v; }
 	virtual bool canMove() const override { return false; }
 	virtual string getType() const override { return "-1"; }
 	virtual int getId() const override { return -1; }
@@ -286,21 +317,24 @@ public:
 class Villager : public AbstractCharacter {
 protected:
 public:
-	Villager(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
+	Villager(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 1, 1 } {
 		this->photo = "villager";
 
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",2 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "MOVE",1 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "FORTIFY",1 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "BUILD",3 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "REPAIR",3 };
-		this->actions.push_back(action);
+		this->actions.push_back("ATTACK");
+		this->actions.push_back("MOVE");
+		this->actions.push_back("FORTIFY");
+		this->actions.push_back("BUILD");
+		this->actions.push_back("REPAIR");
+	}
+
+	float getSpeed() const override {
+		return this->speed;
+	}
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -310,7 +344,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
@@ -382,12 +416,17 @@ public:
 class Tower : public AbstractBuilding {
 protected:
 public:
-	Tower(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
+	Tower(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 3 } {
 		this->photo = "tower";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",1 };
-		this->actions.push_back(action);
+		this->actions.push_back("ATTACK");
+	}
+
+	//speed == 0;
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -397,7 +436,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
@@ -467,16 +506,21 @@ public:
 class Galleon : public AbstractCharacter {
 protected:
 public:
-	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER" } {
+	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER", 1, 2 } {
 		this->photo = "galleon";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",2 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "MOVE",1 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "DOCK",1 };
-		this->actions.push_back(action);
+		this->actions.push_back("ATTACK");
+		this->actions.push_back("MOVE");
+		this->actions.push_back("DOCK");
+	}
+
+	float getSpeed() const override {
+		return this->speed;
+	}
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -486,7 +530,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
@@ -557,14 +601,20 @@ public:
 class HorseArcher : public AbstractCharacter {
 protected:
 public:
-	HorseArcher(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
+	HorseArcher(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 2, 2 } {
 		this->photo = "horse_archer";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",2 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "MOVE",1 };
-		this->actions.push_back(action);
+		this->actions.push_back("ATTACK");
+		this->actions.push_back("MOVE");
+	}
+
+	float getSpeed() const override {
+		return this->speed;
+	}
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -574,7 +624,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
