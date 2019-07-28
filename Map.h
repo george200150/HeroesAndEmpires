@@ -8,6 +8,7 @@
 #include <string>
 using std::vector;
 using std::string;
+#include "Player.h"
 
 /*
 This class is the actual service of the GAME
@@ -29,11 +30,101 @@ private:
 	int selectedX = -1, selectedY = -1;
 	bool actionSucceded = false;
 
+
+
+	vector<Player*> players;
+
+
+
+
 public:
+
+
+	Player* getOwnerAt(int x, int y) {
+		for (auto player : this->players) {
+			if (player->getUnitAt(x, y)->getId() != -1) {
+				return player;
+			}
+		}
+		return nullptr;
+	}
+
+
+	void createPlayer(string name, Civilisation* civ, string color) {
+		players.push_back(new Player{ player_count, name, civ, color });
+		this->player_count++;
+	}
+
+
+	bool SelectedUnitBelongsToActivePlayer(int x, int y) const {//function uses class parameter turn_count.
+		for (auto player : this->players) {
+			if (player->getPlayerId() == this->getPlayerIdToBeActive() && player->getAllUnits().at(30 * y + x)->getId() != -1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	vector<Player*> getAllPlayers() {
+		return this->players;
+	}
+
 
 	vector<AbstractUnit*> getAllUnits() {
 		return this->unitMatrix;
 	}
+
+	void moveUnitFromTo(int x0, int y0, int x1, int y1) {
+		auto owner = getOwnerAt(x0, y0);
+		auto ownedUnit0 = owner->getUnitAt(x0, y0);
+		auto ownedUnit1 = owner->getUnitAt(x1, y1);
+		owner->setUnitAt(ownedUnit0, x1, y1);
+		owner->setUnitAt(ownedUnit1, x0, y0);
+		
+
+		auto tile0 = getTileAt(x0, y0);
+		auto tile1 = getTileAt(x1, y1);
+		tile0->unoccupy();
+		tile1->occupy();
+
+		auto unit0 = getUnitAt(x0, y0);
+		auto unit1 = getUnitAt(x1, y1);
+//		setUnitAt(x0, y0, unit1);
+//		setUnitAt(x1, y1, unit0);
+		this->unitMatrix.at(30 * y0 + x0) = unit1;
+		this->unitMatrix.at(30 * y1 + x1) = unit0;
+		
+
+
+	}
+
+	void setUnitAt(int x, int y, AbstractUnit* unit){
+		//Player* pl = this->getOwnerAt(x, y);
+		//pl->resetUnitAt(unit, x, y);
+
+
+		/*auto temp = this->unitMatrix.at(30 * y + x);
+		this->unitMatrix.at(30 * y + x) = unit;
+		delete temp;
+		this->tileMatrix.at(30 * y + x)->occupy();*/
+
+		//pl->setUnitAt(new EmptyUnit(-1, -1, -1, -1, "-1"), x, y);
+
+	}
+
+	void clearUnitAt(int x, int y){
+		Player* pl = this->getOwnerAt(x, y);
+		pl->setUnitAt(new EmptyUnit{ -1,-1,-1,-1,"-1" }, x, y);
+
+
+		auto temp = this->unitMatrix.at(30 * y + x);
+		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1" };
+		delete temp;
+		this->tileMatrix.at(30 * y + x)->unoccupy();
+	}
+
+
 
 	vector<int> getXYbyUnit(AbstractUnit* unit) const {
 		vector<int> xy;
@@ -125,8 +216,8 @@ public:
 	//void decrementPlayerCount() {
 	//	this->player_count--;
 	//}
-	void payActionExecution(/*AbstractAction* act + etc altele...*/) {
-		this->current_money_per_turn-=1;// -= act.getCost() * Unit.getBaseMultiplier() - eventual...;
+	void payActionExecution(int cost) {
+		this->current_money_per_turn -= cost;
 	}
 
 	int getSelectedX() const {

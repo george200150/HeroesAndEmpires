@@ -17,6 +17,22 @@ public:
 	Player(string name, Civilisation* civ) : name{ name }, civ{ civ } {this->color = "gray"; initialiseFreeSpace(); }
 	Player(int id, string name, Civilisation* civ, string color) : id{ id }, name { name }, civ{ civ }, color{ color } { initialiseFreeSpace(); }
 
+
+	AbstractUnit* getUnitAt(int x, int y) {
+		return this->units.at(30 * y + x);
+	}
+
+
+	void setUnitAt(AbstractUnit* unit, int x, int y) {
+		this->units.at(30 * y + x) = unit;
+	}
+
+	void resetUnitAt(AbstractUnit* unit, int x, int y) {
+		auto temp = this->units.at(30 * y + x);
+		this->units.at(30 * y + x) = unit;
+		delete temp;
+	}
+
 	void initialiseFreeSpace() {
 		int id = -1;
 		int baseHealth = -1;

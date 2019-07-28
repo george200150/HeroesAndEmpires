@@ -143,7 +143,7 @@ public:
 	WaterTile(bool occupied) : AbstractTile{ false, occupied } {
 		int option = rand();
 		if (option % 2 == 0) {
-			setBrush(QBrush(QColor(109, 197, 237,100)));
+			setBrush(QBrush(QColor(109, 197, 237, 100)));
 			//setBrush(QBrush(QColor(20, 20, 140, 255)));
 		}
 		else {

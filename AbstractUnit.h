@@ -2,10 +2,11 @@
 #include <QGraphicsRectItem>
 #include <QBrush>
 #include <string>
+#include <vector>
 using std::string;
-using std::string;
+using std::vector;
 
-#include "AbstractAction.h"
+/*#include "AbstractAction.h" THIS HAS GONE*/
 
 
 /*
@@ -32,7 +33,8 @@ protected:
 
 	//Player* owner;- i could easily search in all players @ (x,y) for that unit. if found, there you have the owner.
 
-	vector<AbstractAction*> actions;// - this is gonna be my next headache for this week
+	//vector<AbstractAction*> actions;
+	vector<string> actions;
 public:
 
 	/*
@@ -65,10 +67,9 @@ public:
 
 
 	/*
-	this may go soon...
+	
 	*/
-	virtual vector<AbstractAction*> getActions() = 0;
-	//virtual Player* getOwner() = 0;	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!	!!!!
+	virtual vector<string> getActions() = 0;
 
 
 
@@ -206,7 +207,7 @@ public:
 
 	virtual string getPhoto() const override = 0;
 	virtual void setPhoto(string newPhoto) override = 0;
-	virtual vector<AbstractAction*> getActions() override = 0;
+	virtual vector<string> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
 	virtual int getId() const override = 0;
@@ -236,7 +237,7 @@ public:
 
 	virtual string getPhoto() const override = 0;
 	virtual void setPhoto(string newPhoto) override = 0;
-	virtual vector<AbstractAction*> getActions() override = 0;
+	virtual vector<string> getActions() override = 0;
 	virtual bool canMove() const override = 0;
 	virtual string getType() const override = 0;
 	virtual int getId() const override= 0;
@@ -265,7 +266,7 @@ public:
 
 	virtual string getPhoto() const override { return "-1"; }
 	virtual void setPhoto(string newPhoto) override {}
-	virtual vector<AbstractAction*> getActions() override { vector<AbstractAction*> v;  return v; }
+	virtual vector<string> getActions() override { vector<string> v;  return v; }
 	virtual bool canMove() const override { return false; }
 	virtual string getType() const override { return "-1"; }
 	virtual int getId() const override { return -1; }
@@ -290,7 +291,7 @@ public:
 		this->photo = "villager";
 
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
+		/*AbstractAction* action;
 		action = new AbstractAction{ "ATTACK",2 };
 		this->actions.push_back(action);
 		action = new AbstractAction{ "MOVE",1 };
@@ -300,7 +301,12 @@ public:
 		action = new AbstractAction{ "BUILD",3 };
 		this->actions.push_back(action);
 		action = new AbstractAction{ "REPAIR",3 };
-		this->actions.push_back(action);
+		this->actions.push_back(action); - THIS HAS GONE*/
+		this->actions.push_back("ATTACK");
+		this->actions.push_back("MOVE");
+		this->actions.push_back("FORTIFY");
+		this->actions.push_back("BUILD");
+		this->actions.push_back("REPAIR");
 	}
 
 	string getPhoto() const override {
@@ -310,7 +316,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
@@ -385,9 +391,10 @@ public:
 	Tower(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
 		this->photo = "tower";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
+		/*AbstractAction* action;
 		action = new AbstractAction{ "ATTACK",1 };
-		this->actions.push_back(action);
+		this->actions.push_back(action);*/
+		this->actions.push_back("ATTACK");
 	}
 
 	string getPhoto() const override {
@@ -397,7 +404,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
@@ -470,13 +477,16 @@ public:
 	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER" } {
 		this->photo = "galleon";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
+		/*AbstractAction* action;
 		action = new AbstractAction{ "ATTACK",2 };
 		this->actions.push_back(action);
 		action = new AbstractAction{ "MOVE",1 };
 		this->actions.push_back(action);
 		action = new AbstractAction{ "DOCK",1 };
-		this->actions.push_back(action);
+		this->actions.push_back(action);*/
+		this->actions.push_back("ATTACK");
+		this->actions.push_back("MOVE");
+		this->actions.push_back("DOCK");
 	}
 
 	string getPhoto() const override {
@@ -486,7 +496,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
@@ -560,11 +570,13 @@ public:
 	HorseArcher(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
 		this->photo = "horse_archer";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		AbstractAction* action;
+		/*AbstractAction* action;
 		action = new AbstractAction{ "ATTACK",2 };
 		this->actions.push_back(action);
 		action = new AbstractAction{ "MOVE",1 };
-		this->actions.push_back(action);
+		this->actions.push_back(action);*/
+		this->actions.push_back("ATTACK");
+		this->actions.push_back("MOVE");
 	}
 
 	string getPhoto() const override {
@@ -574,7 +586,7 @@ public:
 		this->photo = newPhoto;
 	}
 
-	vector<AbstractAction*> getActions() override {
+	vector<string> getActions() override {
 		return this->actions;
 	}
 
