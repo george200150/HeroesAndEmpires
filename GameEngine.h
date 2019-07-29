@@ -3,76 +3,93 @@
 #include <QDebug>
 #include <QTimer>
 
-#include <AbstractUnit.h>
-#include <AbstractTiles.h>
+//#include "Player.h"
+
+#include "AbstractUnit.h"
+#include "AbstractTiles.h"
+
+#include <string>
+using std::string;
 
 class GameEngine : public QObject {
 	Q_OBJECT;
 	QTimer timer;
 	int time;
 
+	string winner;
+
 signals:
-	void gameFinished(bool win);//might change due to the number of players > 1
-	void unitAttacked(AbstractUnit* Attacker, AbstractUnit* Defender);
-	void unitMissed(AbstractUnit* Attacker);
-	void unitBuilt(AbstractUnit* Builder, AbstractUnit* Building, AbstractTile* Spot/* int x, int y*/);
-	void unitDestroyed(AbstractUnit* Destroyed/*, int x, int y*/);//either (unit) or (x,y)
+	void allUnitsGenerated();
+	void gameFinished(string name);//might change due to the number of players > 1
+	//void unitAttacked(AbstractUnit* Attacker, AbstractUnit* Defender);
+	//void unitMissed(AbstractUnit* Attacker);
+	//void unitBuilt(AbstractUnit* Builder, AbstractUnit* Building, AbstractTile* Spot/* int x, int y*/);
+	//void unitDestroyed(AbstractUnit* Destroyed/*, int x, int y*/);//either (unit) or (x,y)
 	void tick();
 	void turnFinished();
 	void unitCreated(AbstractUnit* Created, AbstractTile* Spot/*int x, int y*/);
 	void unitCreatedAt(AbstractUnit* Created, int x, int y);
 	void tileCreated(AbstractTile* tile, int x, int y);//the game itself will decide what tile it generates
 	void tileOccupied(AbstractTile* tile, AbstractUnit* Occupand/*, int x, int y*/);//either (tile) or (x,y)
-	void tileFreed(AbstractTile* tile /*,int x, int y*/);
+	//void tileFreed(AbstractTile* tile /*,int x, int y*/);
 	//void unitMoved(AbstractUnit* Moved, int exX, int exY, int newX, int newY);
-	void unitMoved(AbstractUnit* Moved, AbstractTile* Source, AbstractTile* Destination);
+	//void unitMoved(AbstractUnit* Moved, AbstractTile* Source, AbstractTile* Destination);
 public:
-	GameEngine() { time = 0; }
+	GameEngine() { time = 0; winner = ""; }
 
-	void dealtAttack(AbstractUnit* Attacker, AbstractUnit* Defender) {
-		//random chance
-		int random = rand() % 100;
-		//this (below) happens IN GAME CLASS!!!
-		/*int ch = Defender->getCurrentHealth();
-		int cdph = Attacker->getCurrentDamagePerHit();
-		Defender->modifyCurrentHealth(ch - cdph);
-		ch = Defender->getCurrentHealth();*/
+	//void dealtAttack(AbstractUnit* Attacker, AbstractUnit* Defender) {
+	//	//random chance
+	//	int random = rand() % 100;
+	//	//this (below) happens IN GAME CLASS!!!
+	//	/*int ch = Defender->getCurrentHealth();
+	//	int cdph = Attacker->getCurrentDamagePerHit();
+	//	Defender->modifyCurrentHealth(ch - cdph);
+	//	ch = Defender->getCurrentHealth();*/
 
-		if (random > 50/*attacker->HitChance*/) {/*50% hit chance*/
-			emit unitAttacked(Attacker, Defender);
-		}
-		else {
-			emit unitMissed(Attacker);
-		}
-	}
+	//	if (random > 50/*attacker->HitChance*/) {/*50% hit chance*/
+	//		emit unitAttacked(Attacker, Defender);
+	//	}
+	//	else {
+	//		emit unitMissed(Attacker);
+	//	}
+	//}
 
-	void unitPerished(AbstractUnit* Defender, AbstractTile* tile/*int x, int y*/) {
-		emit unitDestroyed(Defender);
-		emit tileFreed(tile/*x, y*/);
-	}
+	//void unitPerished(AbstractUnit* Defender, AbstractTile* tile/*int x, int y*/) {
+	//	emit unitDestroyed(Defender);
+	//	emit tileFreed(tile/*x, y*/);
+	//}
 
 
 
-	void startBuild(AbstractUnit* Builder, AbstractUnit* Building, AbstractTile* BuildSpot) {
-		//if this build is ready in the current turn of this player
+	//void startBuild(AbstractUnit* Builder, AbstractUnit* Building, AbstractTile* BuildSpot) {
+	//	//if this build is ready in the current turn of this player
 
-		//emit unitCreated(Building, BuildSpot); - either this or next emit statement... (idk)
-		emit unitBuilt(Builder, Building, BuildSpot);
-		emit tileOccupied(BuildSpot, Building);
-	}
+	//	//emit unitCreated(Building, BuildSpot); - either this or next emit statement... (idk)
+	//	emit unitBuilt(Builder, Building, BuildSpot);
+	//	emit tileOccupied(BuildSpot, Building);
+	//}
 
-	void unitProgressed(AbstractUnit* Unit, AbstractTile* Source, AbstractTile* Destination) {
-		emit tileFreed(Source);
-		emit tileOccupied(Destination, Unit);
-		emit unitMoved(Unit, Source, Destination);//i don't know if still necessary
+	//void unitProgressed(AbstractUnit* Unit, AbstractTile* Source, AbstractTile* Destination) {
+	//	emit tileFreed(Source);
+	//	emit tileOccupied(Destination, Unit);
+	//	emit unitMoved(Unit, Source, Destination);//i don't know if still necessary
+	//}
+
+	void forceTurnFinish() {
+		time = 0;
+		emit turnFinished();
 	}
 
 	bool isTurnFinished() {
-		return time % 120000==0;//2 minutes/turn
+		return time % 1200==0;//2 minutes/turn
 	}
 
-	bool isGameFinished() {
-		return false;
+	void foundAWinner(string winner) {
+		this->winner = winner;
+	}
+
+	bool weHaveAWinner() {
+		return this->winner!="";
 		//we should check if there are any units left on map of player/enemy/smbd...
 	}
 
@@ -85,25 +102,34 @@ public:
 			for (int x = 0; x < board_w; x++) {
 				if (abs(19 * x + 29 * y - 551) >= 100) {
 					emit tileCreated(new GrassTile{ false }, x, y);
-					if (rand() % 1200 > 1150) {
+					if (rand() % 100 > 98) {
 						emit unitCreatedAt(new Villager{ id,100,20,90 }, x, y);
 						id++;
 					}
-					if (rand() % 1200 > 1150) {
+					if (rand() % 100 > 98) {
 						emit unitCreatedAt(new Tower{ id,1000,20,75 }, x, y);
+						id++;
+					}
+					
+					if (rand() % 100 > 98) {
+						emit unitCreatedAt(new HorseArcher{ id,200,40,80 }, x, y);
 						id++;
 					}
 				}
 				else {
 					emit tileCreated(new WaterTile{ false }, x, y);
 					if (rand() % 1200 > 1150) {
-						emit unitCreatedAt(new Galleon{ id,100,20,75 }, x, y);
+						emit unitCreatedAt(new Galleon{ id,100,30,75 }, x, y);
 						id++;
+
+						/*
+						ONLY THE PLAYER CAN CREATE UNITS NOW !!!
+						*/
 					}
 				}
 			}
 		}
-
+		emit allUnitsGenerated();
 	}
 
 
@@ -116,13 +142,13 @@ public:
 				emit turnFinished();
 			}
 
-			if (isGameFinished()) {
+			if (weHaveAWinner()) {
 				timer.stop();
-				emit gameFinished(true);
+				emit gameFinished(winner);
 			}
 		});
 		//generate timeot signal every ms
-		timer.start(1);
+		timer.start(100);
 	}
 
 };

@@ -14,12 +14,17 @@
 #include "Player.h"
 #include "Map.h"
 #include "AbstractUnit.h"
+#include "AbstractAction.h"
 
 #include <string>
 #include <vector>
 using std::string;
 using std::vector;
 using std::to_string;
+
+
+#include <qwidget.h>//...
+#include <qformlayout.h>//...
 
 
 class ActionWindow : public QWidget {
@@ -59,10 +64,10 @@ private:
 			; });
 	}
 
-	void initialGUIState() {
-		for (const auto& action : this->unit->getActions()) {
+	void initialGUIState() {//THIS PART MUST BE CHANGED SO THAT IT ALLOWS ABSTRACT ACTIONS TO BE CREATED
+		for (string action : this->unit->getActions()) {
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(QString::fromStdString(action->getName()));
+			item->setText(QString::fromStdString(action));
 			lst->addItem(item);
 		}
 	}
@@ -169,7 +174,7 @@ public:
 
 
 
-class GAME: public QGraphicsView{
+class GAME : public QGraphicsView {
 private:
 
 	Map* map;
@@ -180,35 +185,7 @@ private:
 
 	QGraphicsScene* scene;
 
-	vector<Player> players;
-
-	QGraphicsRectItem* leftWall;
-	QGraphicsRectItem* rightWall;
-	QGraphicsRectItem* topWall;
-	QGraphicsRectItem* bottomWall;
-
-
-	void initEnclosingWals() {
-		int wallTickness = 8;
-		leftWall = new QGraphicsRectItem(0, 0, wallTickness, height());
-		auto br = QBrush(Qt::gray);
-		leftWall->setBrush(br);
-		scene->addItem(leftWall);
-		rightWall = new QGraphicsRectItem(width() - wallTickness - 1, 0, wallTickness, height());
-		rightWall->setBrush(br);
-		scene->addItem(rightWall);
-		topWall = new QGraphicsRectItem(0, 0, width(), wallTickness);
-		topWall->setBrush(br);
-		scene->addItem(topWall);
-		bottomWall = new QGraphicsRectItem(0, height() - 50, width(), wallTickness);
-		bottomWall->setBrush(br);
-		scene->addItem(bottomWall);
-
-	}
-
-	void createPlayer(string name) {//minimalistic
-		players.push_back(Player{ name });
-	}
+	InfoWindow* wndw = nullptr;
 
 
 	AbstractTile* getTileAt(int x, int y) {
@@ -227,25 +204,18 @@ private:
 		this->map->addTile(tile, x, y);
 	}
 
-	
+
+
 	void addUnit(AbstractUnit* unit, int x, int y) {
-		
-		//auto temp = this->unitMatrix.at(30 * y + x);
-
 		unit->setPos(x * 50, y * 50);
-		/*AbstractTile* tile = getTileAt(x, y);
-		tile->occupy();*/
 		scene->addItem(unit);
-
-		/*this->unitMatrix.at(30 * y + x) = unit;
-		delete temp;*/
 		this->map->addUnit(unit, x, y);
 	}
 
 	void changeTurn() {
-		QMessageBox::information(this, "Info", "TURN TIME EXPIRED!");
+		QMessageBox::information(this, "Info", "YOUR TURN HAS ENDED!");
 		this->map->deleteSelection();
-		this->scene->removeItem(SelectedMark);//i do not know if it can throw or not...
+		this->scene->removeItem(SelectedMark);
 
 		//all actions undergone must be stopped!
 
@@ -254,10 +224,12 @@ private:
 
 
 	void initSignalSlots() {
-		
-		//advanceGame invoked every time
+
 		QObject::connect(engine, &GameEngine::turnFinished, this, &GAME::changeTurn);
 
+		QObject::connect(engine, &GameEngine::allUnitsGenerated, this, &GAME::InitUnitColours);
+
+		//advanceGame invoked every time
 		QObject::connect(engine, &GameEngine::tick, this, &GAME::advanceGame);
 
 		QObject::connect(engine, &GameEngine::tileCreated, [&](AbstractTile* tile, int x, int y) {
@@ -268,46 +240,18 @@ private:
 			addUnit(unit, x, y);
 		});
 
-		QObject::connect(engine, &GameEngine::gameFinished, [&](bool win) {
-			if (win) {
-				QMessageBox::information(this, "Info", "You win!!!");
-			}
-			else {
-				QMessageBox::information(this, "Info", "You lose!!!");
-			}
+		QObject::connect(engine, &GameEngine::gameFinished, [&](string winner) {
+
+			string str = winner + " has won the game !!!";
+			QString qstr = QString::fromStdString(str);
+			QMessageBox::information(this, "Info", qstr);
 		});
 	}
 
 
-	//void Tile_Square::mousePressEvent(QGraphicsSceneMouseEvent *event)
-	//{
-	//	if (event->buttons() & Qt::LeftButton)
-	//	{
-	//		// ... handle left click here
-	//	}
-	//	else if (event->buttons() & Qt::RightButton)
-	//	{
-	//		// ... handle right click here
-	//	}
-	//}
-
-	/*what I want is this:
-
-	- when left click is pressed, something is selected. (tiles - source, destination)
-
-	- when right click is pressed, a window with possible actions on that tile is presented
-	- the user has to choose one of those actions (idk if it interferes with mousepressevent...)
-
-	- when a tile destination is clicked without action, it becomes source tile (if possible)
-
-	- when a tile destination is clicked with action selected, the action is executed.
-
-
-	I have to clarify some things... like all those if-s and else-s... i must create a better structure.
-
-	*/
-
 	void mousePressEvent(QMouseEvent* ev) override {
+
+
 		int x = ev->pos().x();
 		int y = ev->pos().y();
 
@@ -320,121 +264,143 @@ private:
 		auto localSelectedTile = getTileAt(x, y);
 		auto localSelectedUnit = getUnitAt(x, y);
 
+		//if (ev->button() == Qt::MiddleButton) {
+		//	/*this restricts the game for mouse users only...*/
+		//}
+
 		if (ev->button() == Qt::RightButton) {
+			/*
+			If the user clicks RMB
+			THEN...
+			*/
 			if (!this->map->wasSelectionNULL() && this->map->isSameSelection(x, y) && tile != nullptr && unit != nullptr && unit->getId() != -1) {
+				/*
+				If there was selected a tile beforehand
+				AND
+				the clicked tile corresponds to the selected one (stored in memory)
+				AND
+				the type of tile is an existing one (not EMPTY TILE)
+				AND
+				there is a player owned unit on the clicked tile
+				THEN...
+				*/
 				ActionWindow* act = new ActionWindow{ this->map,tile,unit };
-				act->show();
+				act->show();//this window sends into the service the action to be executed by the selected unit
 			}
 		}
 		else if (ev->button() == Qt::LeftButton) {
-
+			/*
+			If the user clicks LMB
+			THEN...
+			*/
 			if (this->map->wasSelectionNULL()) {
-				if (this->map->UnitExistsInSelected(localSelectedUnit)) {
+				/*
+				If there was nothing selected before
+				THEN...
+				*/
+				if (this->map->UnitExistsInSelected(localSelectedUnit) && this->map->SelectedUnitBelongsToActivePlayer(x, y)) {
+					/*
+					if there is an unit on the clicked tile
+					AND
+					the unit belongs to the currently active player
+					THEN...
+					*/
 					this->map->setSelection(localSelectedTile, localSelectedUnit, x, y);
 					this->SelectedMark->setPos(x * 50, y * 50);
-					this->scene->addItem(SelectedMark);
+					this->scene->addItem(SelectedMark);//the selection is memorised
 				}
 				//else {
 					/*ignore selection*/
 				//}
 			}
 			else {
+				/*
+				ELSE (it means that there was something selected beforehand
+				*/
 				if (this->map->isSameSelection(x, y)) {
-					//ignore command
+					/*
+					If the selection is identical to the one in memory
+					THEN...
+					*/
 					this->scene->removeItem(SelectedMark);
-					this->map->deleteSelection();
+					this->map->deleteSelection();//reset selection; ignore command
 				}
 				else {
+					/*
+					ELSE (it means that the selection is different from the initial one)
+					*/
+
+					//if an action was selected, then we create that action and call its execute() method.
 					string action = this->map->getSelectedAction();
 					if (action == "NONE") {
-						//renew selection
-						this->map->setSelection(localSelectedTile, localSelectedUnit, x, y);
-						this->SelectedMark->setPos(x * 50, y * 50);
-						this->scene->addItem(SelectedMark);
+						/*ignore click as there is no action selected - no purpose*/
 					}
-					else if (action == "MOVE") {
-						if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "LAND") {
-							this->map->moveAction(localSelectedTile, x, y);
-							this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
-							this->map->deleteSelection();
-							this->scene->removeItem(SelectedMark);
+					else {
+						int sourcex = this->map->getSelectedX();
+						int sourcey = this->map->getSelectedY();
+						string actName = this->map->getSelectedAction();
+						AbstractActionCreator actionCreator = AbstractActionCreator{ this->map,sourcex,sourcey,x,y,actName };
+						AbstractAction* act = actionCreator.returnActionCreated();
+						try {
+							
+							if (act->getCurrentCost() > this->map->getCurrentMoneyLeft())//do not have enough credits for this action
+								throw ExecutionException{"THE ACTION REQUIRES TOO MANY CREDITS!!!"};
 
-						}
-						else if (this->map->getSelectedUnit()->canMove() && !localSelectedTile->isOccupied() && !localSelectedTile->isCrossable() && this->map->getSelectedUnit()->getType() == "WATER") {
-							this->map->moveAction(localSelectedTile, x, y);
-							this->map->getUnitAt(x, y)->setPos(x * 50, y * 50);
+							act->execute();//all the data modified must be transmitted to players(move, destroy)
+							
 							this->map->deleteSelection();
 							this->scene->removeItem(SelectedMark);
+							this->map->payActionExecution(act->getCurrentCost());//actually, the base cost is the cost * multiplier...
+							/*if (this->map->getCurrentMoneyLeft() <= 0) {
+								this->engine->forceTurnFinish();
+							}*/
 						}
-						else {
-							QMessageBox::warning(this, "Permission Warning", "YOU CANNOT EXECUTE THAT ACTION!");
-							this->map->deleteSelection();
-							this->scene->removeItem(SelectedMark);
+						catch (ExecutionException& ex) {
+							QMessageBox::warning(this, "ACTION FAILED!", QString::fromStdString(ex.print()));
 						}
-					}//end of move
-					else if (action == "ATTACK") {
-						if (localSelectedTile->isOccupied()) {//also check if not friendly fire
-							this->map->attackAction(this->map->getSelectedUnit(), localSelectedUnit);
-							if (localSelectedUnit->getCurrentHealth() <= 0) {
-								this->map->destroyAction(localSelectedUnit);
-							}
-							this->map->deleteSelection();
-							this->scene->removeItem(SelectedMark);
-							if (this->map->getActionSuccess()) {
-								QMessageBox::information(this, "SUCCESS!", "YOU HIT 'EM HARD!");
-							}
-							else {
-								QMessageBox::information(this, "OH NO!", "YOU MISSED!");
-							}
+						catch (MessageException& ex) {
+							QMessageBox::warning(this, "ACTION SUCCEDED!", QString::fromStdString(ex.print()));
+							this->map->payActionExecution(act->getCurrentCost());//actually, the base cost is the cost * multiplier...
 						}
-					}//enf of attack
+					}
+
+					//else (if there is no action selected) (this is gonna remove the "control hack")
+					//we should just ignore that click, without deleting any previous recorded information.
 				}
 			}
 		}
 	}
 
-	void mouseDoubleClickEvent(QMouseEvent* ev) override{
+	void mouseDoubleClickEvent(QMouseEvent* ev) override {
 		int x = ev->pos().x();
 		int y = ev->pos().y();
-		
+
 		x /= 50;
 		y /= 50;
-		
+
 		auto tile = getTileAt(x, y);
 		auto unit = getUnitAt(x, y);
 
-		InfoWindow* wndw = new InfoWindow{ tile, unit, x, y };
+		wndw = new InfoWindow{ tile, unit, x, y };
 		wndw->show();
 	}
 
-	////handle mouse move
-	//void mouseMoveEvent(QMouseEvent* ev) override {
-	//	//works only if setMouseTracking(true);
-	//	//player->setPos(x, player->y());
-	//}
-
-	//void keyPressEvent(QKeyEvent* ev) override {
-	//	if (ev->key() == Qt::Key_Left) {
-	//		//player->moveX(-15);
-	//	}
-	//	else if (ev->key() == Qt::Key_Right) {
-	//		//player->moveX(15);
-	//	}
-	//	else if (ev->key() == Qt::Key_Space) {
-	//		//restart
-	//	}
-	//}
+	void keyPressEvent(QKeyEvent* ev) override {
+		if (ev->key() == Qt::Key_End) {
+			this->engine->forceTurnFinish();
+		}
+	}
 
 	void advanceGame() {
 		int i;
-		//for (i = 0; i < this->map->getPlayerCount(); i++) {/*MIGHT HAVE TO GO... SOME CALCULATIONS COULD BE DONE IN SERVICE...*/
-		//	if (this->map->getPlayerTurnCount() % this->map->getPlayerCount() == i) {
-		//		auto playerUnits = this->players.at(i).getAllUnits();
-		//		for (auto& unit : playerUnits) {
-		//			/*TO BE CONTINUED*/
-		//		}
-		//	}
-		//}
+		if (this->map->getCurrentMoneyLeft() <= 0) {
+			this->engine->forceTurnFinish();
+		}
+		for (auto pl : this->map->getAllPlayers()) {
+			if (pl->getRemainingUnits() == 0) {
+				this->engine->foundAWinner(pl->getName());
+			}
+		}
 	}
 
 
@@ -445,22 +411,103 @@ private:
 		setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setFixedSize(1500, 1000);
+		//setFixedSize(1800, 1000);
 		scene->setSceneRect(0, 0, 1500, 1000);
-		setBackgroundBrush(QBrush(QColor(215, 214, 213,127)));
+		//scene->setSceneRect(0, 0, 1800, 1000);
+		setBackgroundBrush(QBrush(QColor(215, 214, 213, 127)));
 
+		/*QLabel* labPlayer = new QLabel{ "NOW PLAYING: " };
+		QPushButton* btnEndTurn = new QPushButton{ "END TURN" };
+
+		QWidget* wdgStretch = new QWidget;
+		QHBoxLayout* layout = new QHBoxLayout;
+		wdgStretch->setLayout(layout);
+		layout->addStretch();
+
+		QWidget* wdg = new QWidget;
+		QFormLayout* lay = new QFormLayout;
+		wdg->setLayout(lay);
+
+		lay->addRow(labPlayer);
+		lay->addRow(btnEndTurn);
+
+		scene->addWidget(wdgStretch);
+		scene->addWidget(wdg);*/
+		/*
+		I NEED TO CREATE SOME COMMANDS ON THE SCREEN
+		*/
 	}
+
+
+
+
+
+	void createPlayer(string name, Civilisation* civ, string color) {
+		this->map->createPlayer(name, civ, color);
+	}
+
+
+	void InitUnitColours() {
+		Civilisation* britons = new Civilisation{ "Britons" };
+		Civilisation* romans = new Civilisation{ "Romans" };
+		createPlayer("George200150", britons, "BLUE");
+		createPlayer("LordOfUltima98", romans, "RED");
+
+		for (int x = 0; x < 30; x++)
+			for (int y = 0; y < 20; y++) {
+				if (19 * x < -29 * y + 551) {
+					
+					this->map->getAllPlayers().at(0)->addUnit(this->map->getUnitAt(x, y), x, y);
+
+				}
+				else {
+					this->map->getAllPlayers().at(1)->addUnit(this->map->getUnitAt(x, y), x, y);
+				}
+				/*
+				AT THE MOMENT, THERE CAN ONLY BE TWO PLAYERS
+				*/
+			}
+
+		setPlayerColours();
+	}
+
+	void setPlayerColours() {
+		for (auto& pl : this->map->getAllPlayers()) {
+			pl->setColourForUnits();
+
+
+		}
+		int x = 0;
+		int y = 0;
+		for (auto& pos : this->map->getAllUnits()) {
+			this->scene->removeItem(pos);
+			for (auto player : this->map->getAllPlayers()) {
+				auto unit = player->getAllUnits().at(30 * y + x);
+				if (unit->getId() != -1) {
+					this->scene->addItem(unit);
+					break;
+				}
+			}
+
+			x++;
+			if (x == 30) {
+				x = 0;
+				y++;
+			}
+		}
+	}
+
+
 
 public:
 	GAME(GameEngine* engine, Map* map) :engine{ engine }, map{ map } {
 		setMouseTracking(true);
 		initScene();
-		initEnclosingWals();
-		createPlayer("Wallace");
 
 		initSignalSlots();
 
-		//this->SelectedMark->setBrush(QBrush(QColor(224, 195, 30, 100)));
 		this->SelectedMark->setBrush(QBrush(QColor(255, 255, 0, 100)));
+		
 		this->SelectedMark->setRect(0, 0, 50, 50);
 	}
 };
