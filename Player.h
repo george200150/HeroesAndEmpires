@@ -17,15 +17,24 @@ public:
 	Player(string name) : name{ name }, civ{ new Civilisation{"Gaia"} } {this->color = "gray"; initialiseFreeSpace(); unitsAlive = 0; }
 	Player(string name, Civilisation* civ) : name{ name }, civ{ civ } {this->color = "gray"; initialiseFreeSpace(); unitsAlive = 0; }
 	Player(int id, string name, Civilisation* civ, string color) : id{ id }, name{ name }, civ{ civ }, color{ color } { initialiseFreeSpace(); unitsAlive = 0; }
-
-	int getRemainingUnits() const {//theta(n) - inefficient!!!
-		/*int count = 0;
-		for (const auto& u : this->units) {
-			if (u->getId() != -1)
-				count++;
+	~Player() {
+		/*for (auto& unit : this->units)
+			if(...)
+			delete unit;*///memory leaks... lots of it... TODO SOLVE MEMORY LEAKS!!!!!!!!!!!!
+		//for some reason, there are many EmptyTiles left if we delete everything in Map...
+		//however, there seems to be ok when deleting units in player...
+		while (this->units.size() > 0) {
+			delete units.at(units.size() - 1);
+			units.pop_back();
 		}
-		return count;*/
-		return this->unitsAlive;//theta(1) - so efficient! :D
+		
+		
+		if (this->civ != nullptr)
+			delete civ;
+	}
+
+	int getRemainingUnits() const {
+		return this->unitsAlive;
 	}
 
 	string getName() const {
@@ -38,7 +47,9 @@ public:
 
 
 	void setUnitAt(AbstractUnit* unit, int x, int y) {
+		//auto temp = this->units.at(30 * y + x);/*PROBABLY - MEMORY LEAKS HERE *///However, I think not, as I remember the unit replaced was used somewhere else..
 		this->units.at(30 * y + x) = unit;
+		//delete temp;
 		
 		if (unit->getId() != -1)
 			this->unitsAlive++;
@@ -92,7 +103,9 @@ public:
 	}
 
 	void addUnit(AbstractUnit* unit, int x, int y) {
-		this->units.at(30 * y + x) = unit;
+		auto temp = this->units.at(30 * y + x);
+		this->units.at(30 * y + x) = unit;/*MEMORY LEAK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+		delete temp;
 		
 		if(unit->getId() != -1)
 			this->unitsAlive++;
@@ -102,13 +115,13 @@ public:
 		int i = 0;
 		for (auto& u : this->units) {
 			if (u->getId() == unit->getId()) {
+				
 				if (unit->getId() != -1)
 					this->unitsAlive--;
+
 				auto temp = this->units.at(i);
 				this->units.at(i) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
 				delete temp;
-				
-				
 
 				break;
 			}
@@ -131,26 +144,5 @@ public:
 
 	*/
 
-	void selectUnit(AbstractUnit* unit) const {
-		//???
-	}
-	
-	void actionUnit(AbstractUnit* unit) const {
-		//???
-	}
 };
 
-//Strategy turn-based game
-//
-//CONTROLS:
-//left click - select/deselect unit
-//double left click - get info about unit / tile
-//right click - (selected unit already) show actions list
-//end key - end turn
-//
-//
-//INSTRUCTIONS:
-//each turn you have a number of credits.
-//each action consumes a number of credits.
-//the turn ends when there are no credits, the time runs out or the player ends it.
-//game ends when one of the players has no more units alive.

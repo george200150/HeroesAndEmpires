@@ -34,6 +34,7 @@ private:
 	AbstractUnit* unit = nullptr;
 	QListWidget* lst = new QListWidget;
 	QPushButton* btnSelect = new QPushButton{ "SELECT ACTION" };
+	QLabel* labAct = new QLabel{ "ACTIONS THIS UNIT CAN EXECUTE: " };
 
 	void guiSetup() {
 		QVBoxLayout* linit = new QVBoxLayout;
@@ -42,7 +43,7 @@ private:
 		QWidget* wdg = new QWidget;
 		QVBoxLayout* lv = new QVBoxLayout;
 		wdg->setLayout(lv);
-		lv->addWidget(new QLabel{"ACTIONS THIS UNIT CAN EXECUTE: "});
+		lv->addWidget(labAct);
 		lv->addWidget(lst);
 		lv->addWidget(btnSelect);
 
@@ -74,6 +75,7 @@ private:
 
 public:
 	ActionWindow(Map* map, AbstractTile* tile, AbstractUnit* unit) : map{ map }, tile{ tile }, unit{ unit } {
+		this->setAttribute(Qt::WA_DeleteOnClose);
 		guiSetup();
 		initSignalSlots();
 		initialGUIState();
@@ -116,7 +118,7 @@ private:
 			this->labOccupied->setText(this->labOccupied->text() + QString::fromStdString("TRUE"));
 			//add info about the occupant in the list
 			QListWidgetItem* item = new QListWidgetItem;
-			string name = "unit @ (" + to_string(x) + "," + to_string(y) + ")";
+			string name = unit->getType() + " unit @ (" + to_string(x) + "," + to_string(y) + ")";
 			item->setText(QString::fromStdString(name));
 
 			//we could map the id so that we get the name of the unit
@@ -129,10 +131,18 @@ private:
 			QListWidgetItem* itemC = new QListWidgetItem; 
 			string infoC = "HitChance: " + to_string(unit->getCurrentHitChance()) + "/" + to_string(unit->getBaseHitChance());
 			itemC->setText(QString::fromStdString(infoC));
+			QListWidgetItem* itemS = new QListWidgetItem;
+			string infoS = "Speed: " + to_string(unit->getSpeed());
+			itemS->setText(QString::fromStdString(infoS));
+			QListWidgetItem* itemR = new QListWidgetItem;
+			string infoR = "Range: " + to_string(unit->getRange());
+			itemR->setText(QString::fromStdString(infoR));
 			lst->addItem(item);
 			lst->addItem(itemH);
 			lst->addItem(itemD);
 			lst->addItem(itemC);
+			lst->addItem(itemS);
+			lst->addItem(itemR);
 		}
 		else {
 			this->labOccupied->setText(this->labOccupied->text() + QString::fromStdString("FALSE"));
@@ -179,13 +189,11 @@ private:
 
 	Map* map;
 
-	QGraphicsRectItem* SelectedMark = new QGraphicsRectItem;// (to be deleted in the destructor)	!!!!	!!!!	!!!!	!!!!
+	QGraphicsRectItem* SelectedMark = new QGraphicsRectItem;
 
 	GameEngine* engine;
 
 	QGraphicsScene* scene;
-
-	InfoWindow* wndw = nullptr;
 
 
 	AbstractTile* getTileAt(int x, int y) {
@@ -205,7 +213,10 @@ private:
 	}
 
 
-
+	void addUnitNoShow(AbstractUnit* unit, int x, int y) {
+		unit->setPos(x * 50, y * 50);
+		this->map->addUnit(unit, x, y);
+	}
 	void addUnit(AbstractUnit* unit, int x, int y) {
 		unit->setPos(x * 50, y * 50);
 		scene->addItem(unit);
@@ -237,7 +248,8 @@ private:
 		});
 
 		QObject::connect(engine, &GameEngine::unitCreatedAt, [&](AbstractUnit* unit, int x, int y) {
-			addUnit(unit, x, y);
+			//addUnit(unit, x, y);
+			addUnitNoShow(unit, x, y);//this does not help that much reducing memory use...
 		});
 
 		QObject::connect(engine, &GameEngine::gameFinished, [&](string winner) {
@@ -381,7 +393,7 @@ private:
 		auto tile = getTileAt(x, y);
 		auto unit = getUnitAt(x, y);
 
-		wndw = new InfoWindow{ tile, unit, x, y };
+		InfoWindow* wndw = new InfoWindow{ tile, unit, x, y };
 		wndw->show();
 	}
 
@@ -482,7 +494,7 @@ private:
 		for (auto& pos : this->map->getAllUnits()) {
 			this->scene->removeItem(pos);
 			for (auto player : this->map->getAllPlayers()) {
-				auto unit = player->getAllUnits().at(30 * y + x);
+				auto unit = player->getUnitAt(x, y);
 				if (unit->getId() != -1) {
 					this->scene->addItem(unit);
 					break;
@@ -501,6 +513,7 @@ private:
 
 public:
 	GAME(GameEngine* engine, Map* map) :engine{ engine }, map{ map } {
+		this->setAttribute(Qt::WA_DeleteOnClose);
 		setMouseTracking(true);
 		initScene();
 
@@ -510,5 +523,18 @@ public:
 		
 		this->SelectedMark->setRect(0, 0, 50, 50);
 	}
+	~GAME() {
+		if (this->map != nullptr)
+			delete map;
+		if (this->engine != nullptr)
+			delete engine;
+		if (this->SelectedMark != nullptr) {
+			this->scene->removeItem(SelectedMark);
+			delete SelectedMark;
+		}
+		qDeleteAll(scene->items());
+		delete this->scene;
+	}
+
 };
 

@@ -83,6 +83,12 @@ public:
 	}
 	
 	virtual ~AbstractAction() = default;
+
+	/*virtual ~AbstractAction() {
+		if (map != nullptr)
+			delete map;
+	};*/
+
 };
 
 

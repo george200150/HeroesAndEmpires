@@ -167,7 +167,39 @@ public:
 		this->player_turn_count = 0;
 		this->player_count = 0;
 	}
+	~Map() {
+		//for (auto& tile : this->tileMatrix)
+		//	delete tile;
+		while (this->tileMatrix.size() > 0) {
+			delete tileMatrix.at(tileMatrix.size() - 1);
+			tileMatrix.pop_back();
+		}
 
+		//for (auto& unit : this->unitMatrix)
+		//	delete unit;
+		/*while (this->unitMatrix.size() > 0) {
+			delete unitMatrix.at(unitMatrix.size() - 1);
+			unitMatrix.pop_back();
+		}*/
+
+
+		//for (auto& pl : this->players)
+		//	delete pl;
+		while (this->players.size() > 0) {
+			delete players.at(players.size() - 1);
+			players.pop_back();
+		}
+		
+
+		while (this->unitMatrix.size() > 0) {//units will be deleted in the player destructor
+			unitMatrix.pop_back();
+		}
+
+		//if (this->SelectedTile != nullptr)//at this point, this is futile most likely...
+		//	delete SelectedTile;
+		//if (this->SelectedUnit != nullptr)
+		//	delete SelectedUnit;
+	}
 
 
 	void setSelectedAction(string action) {
@@ -339,20 +371,20 @@ public:
 			this->actionSucceded = true;
 		}
 	}
-	void fortifyAction(AbstractUnit* Fortificator, AbstractUnit* Fortificated);
-	void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
-	void repairAction(AbstractUnit* Repairer, AbstractUnit* Building);
-	void destroyAction(AbstractUnit* Destroyed) {
-		//this->player_count->deleteUnit();
-		auto temp = Destroyed;
-		vector<int> xy = getXYbyUnit(Destroyed);
-		Destroyed = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };//this could go
-		delete temp;//nu ii place aici ca se sterge...
-		//ALSO MODIFY IN 
-		int x = xy.at(0);
-		int y = xy.at(1);
-		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
-		this->tileMatrix.at(30 * y + x)->unoccupy();
-	}
+	//void fortifyAction(AbstractUnit* Fortificator, AbstractUnit* Fortificated);
+	//void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
+	//void repairAction(AbstractUnit* Repairer, AbstractUnit* Building);
+	//void destroyAction(AbstractUnit* Destroyed) {
+	//	//this->player_count->deleteUnit();
+	//	auto temp = Destroyed;
+	//	vector<int> xy = getXYbyUnit(Destroyed);
+	//	Destroyed = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };//this could go
+	//	delete temp;//nu ii place aici ca se sterge...
+	//	//ALSO MODIFY IN 
+	//	int x = xy.at(0);
+	//	int y = xy.at(1);
+	//	this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
+	//	this->tileMatrix.at(30 * y + x)->unoccupy();
+	//}
 };
 

@@ -147,7 +147,7 @@ public:
 				emit gameFinished(winner);
 			}
 		});
-		//generate timeot signal every ms
+		//generate timeot signal every 100 ms
 		timer.start(100);
 	}
 
