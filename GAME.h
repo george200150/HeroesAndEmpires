@@ -23,8 +23,13 @@ using std::vector;
 using std::to_string;
 
 
-#include <qwidget.h>//...
-#include <qformlayout.h>//...
+#include <qwidget.h>
+#include <qformlayout.h>
+
+
+#include <QtCore>
+#include <QtGui>
+#include <QtWidgets>
 
 
 class ActionWindow : public QWidget {
@@ -196,6 +201,13 @@ private:
 	QGraphicsScene* scene;
 
 
+	QGraphicsRectItem* infoRect;
+	QLabel* labPlayer = new QLabel{ "NOW PLAYING: " };
+	QLabel* labCredits = new QLabel{ "CREDITS LEFT: " };
+	QPushButton* btnEndTurn = new QPushButton{ "END TURN" };
+	
+
+
 	AbstractTile* getTileAt(int x, int y) {
 		return this->map->getTileAt(x, y);
 	}
@@ -231,6 +243,11 @@ private:
 		//all actions undergone must be stopped!
 
 		this->map->changeTurn();
+
+		/*auto player = this->map->getActivePlayer();
+		auto str = player->getName();
+		labPlayer->setText("NOW PLAYING: " + QString::fromStdString(str));*/
+		//division by 0 in map function...( <= called too early)
 	}
 
 
@@ -413,6 +430,21 @@ private:
 				this->engine->foundAWinner(pl->getName());
 			}
 		}
+
+		auto player = this->map->getActivePlayer();
+		auto str = player->getName();
+		labPlayer->setText("NOW PLAYING: " + QString::fromStdString(str));
+
+		if (player->getColor() == "RED") {
+			infoRect->setBrush(QBrush(QColor(255, 0, 0, 255)));
+		}
+		else {
+			infoRect->setBrush(QBrush(QColor(0, 0, 255, 255)));
+		}
+
+		auto strng = to_string(this->map->getCurrentMoneyLeft());
+		labCredits->setText("CREDITS LEFT: " + QString::fromStdString(strng));
+		
 	}
 
 
@@ -422,29 +454,37 @@ private:
 
 		setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-		setFixedSize(1500, 1000);
-		//setFixedSize(1800, 1000);
-		scene->setSceneRect(0, 0, 1500, 1000);
-		//scene->setSceneRect(0, 0, 1800, 1000);
+		//setFixedSize(1500, 1000);
+		setFixedSize(1800, 1000);
+		//scene->setSceneRect(0, 0, 1500, 1000);
+		scene->setSceneRect(0, 0, 1800, 1000);
 		setBackgroundBrush(QBrush(QColor(215, 214, 213, 127)));
 
-		/*QLabel* labPlayer = new QLabel{ "NOW PLAYING: " };
-		QPushButton* btnEndTurn = new QPushButton{ "END TURN" };
+		infoRect = new QGraphicsRectItem{ 0,0,200,100 };
+	
+		infoRect->setPos(1550, 250);
+		scene->addItem(infoRect);
 
-		QWidget* wdgStretch = new QWidget;
-		QHBoxLayout* layout = new QHBoxLayout;
-		wdgStretch->setLayout(layout);
-		layout->addStretch();
+		
 
-		QWidget* wdg = new QWidget;
+		QWidget* wdgInfo = new QWidget;
 		QFormLayout* lay = new QFormLayout;
-		wdg->setLayout(lay);
+		wdgInfo->setLayout(lay);
+
+		/*auto player = this->map->getActivePlayer();
+		auto str = player->getName();
+		labPlayer->setText("NOW PLAYING: " + QString::fromStdString(str));*/
 
 		lay->addRow(labPlayer);
-		lay->addRow(btnEndTurn);
+		lay->addRow(labCredits);
+		//lay->addRow(btnEndTurn);
 
-		scene->addWidget(wdgStretch);
-		scene->addWidget(wdg);*/
+		scene->addWidget(wdgInfo);
+		wdgInfo->move(1560, 275);
+
+		//QGraphicsView* graph = new QGraphicsView{};
+		
+
 		/*
 		I NEED TO CREATE SOME COMMANDS ON THE SCREEN
 		*/
@@ -532,8 +572,11 @@ public:
 			this->scene->removeItem(SelectedMark);
 			delete SelectedMark;
 		}
+
+		delete infoRect;
 		qDeleteAll(scene->items());
 		delete this->scene;
+		
 	}
 
 };

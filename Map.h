@@ -39,6 +39,11 @@ private:
 
 public:
 
+
+	Player* getActivePlayer() {
+		return this->players.at(this->player_turn_count % this->player_count);
+	}
+
 	int computeDistance(int x0, int y0, int x1, int y1){
 		float x00 = x0;
 		float y00 = y0;
