@@ -12,11 +12,34 @@ private:
 	string color;//blue,red,yellow,green,purple,white.(gray for GAIA)
 	Civilisation* civ;
 	vector<AbstractUnit*> units;
+	int unitsAlive;
 public:
-	Player(string name) : name{ name }, civ{ new Civilisation{"Gaia"} } {this->color = "gray"; initialiseFreeSpace(); }
-	Player(string name, Civilisation* civ) : name{ name }, civ{ civ } {this->color = "gray"; initialiseFreeSpace(); }
-	Player(int id, string name, Civilisation* civ, string color) : id{ id }, name { name }, civ{ civ }, color{ color } { initialiseFreeSpace(); }
+	Player(string name) : name{ name }, civ{ new Civilisation{"Gaia"} } {this->color = "gray"; initialiseFreeSpace(); unitsAlive = 0; }
+	Player(string name, Civilisation* civ) : name{ name }, civ{ civ } {this->color = "gray"; initialiseFreeSpace(); unitsAlive = 0; }
+	Player(int id, string name, Civilisation* civ, string color) : id{ id }, name{ name }, civ{ civ }, color{ color } { initialiseFreeSpace(); unitsAlive = 0; }
+	~Player() {
+		/*for (auto& unit : this->units)
+			if(...)
+			delete unit;*///memory leaks... lots of it... TODO SOLVE MEMORY LEAKS!!!!!!!!!!!!
+		//for some reason, there are many EmptyTiles left if we delete everything in Map...
+		//however, there seems to be ok when deleting units in player...
+		while (this->units.size() > 0) {
+			delete units.at(units.size() - 1);
+			units.pop_back();
+		}
+		
+		
+		if (this->civ != nullptr)
+			delete civ;
+	}
 
+	int getRemainingUnits() const {
+		return this->unitsAlive;
+	}
+
+	string getName() const {
+		return this->name;
+	}
 
 	AbstractUnit* getUnitAt(int x, int y) {
 		return this->units.at(30 * y + x);
@@ -24,7 +47,12 @@ public:
 
 
 	void setUnitAt(AbstractUnit* unit, int x, int y) {
+		//auto temp = this->units.at(30 * y + x);/*PROBABLY - MEMORY LEAKS HERE *///However, I think not, as I remember the unit replaced was used somewhere else..
 		this->units.at(30 * y + x) = unit;
+		//delete temp;
+		
+		if (unit->getId() != -1)
+			this->unitsAlive++;
 	}
 
 	void resetUnitAt(AbstractUnit* unit, int x, int y) {
@@ -38,10 +66,12 @@ public:
 		int baseHealth = -1;
 		int damagePerHit = -1;
 		int hitChance = -1;
+		float speed = -1;
+		int range = -1;
 		string type = "-1";
 		for (int i = 0; i < 30; i++)
 			for (int j = 0; j < 20; j++) {
-				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance,type };
+				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance, type, speed, range };
 				this->units.push_back(unit);
 			}
 	}
@@ -72,17 +102,31 @@ public:
 		return this->civ;
 	}
 
-	void addUnit(AbstractUnit* unit, int x, int y) {
+	void forceAddUnit(AbstractUnit* unit, int x, int y) {
 		this->units.at(30 * y + x) = unit;
+	}
+
+	void addUnit(AbstractUnit* unit, int x, int y) {
+		auto temp = this->units.at(30 * y + x);
+		this->units.at(30 * y + x) = unit;/*MEMORY LEAK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+		delete temp;
+		
+		if(unit->getId() != -1)
+			this->unitsAlive++;
 	}
 
 	void deleteUnit(AbstractUnit* unit) {
 		int i = 0;
 		for (auto& u : this->units) {
 			if (u->getId() == unit->getId()) {
+				
+				if (unit->getId() != -1)
+					this->unitsAlive--;
+
 				auto temp = this->units.at(i);
-				this->units.at(i) = new EmptyUnit{ -1,-1,-1,-1,"-1" };
+				this->units.at(i) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
 				delete temp;
+
 				break;
 			}
 			i++;
@@ -104,12 +148,5 @@ public:
 
 	*/
 
-	void selectUnit(AbstractUnit* unit) const {
-		//???
-	}
-	
-	void actionUnit(AbstractUnit* unit) const {
-		//???
-	}
 };
 

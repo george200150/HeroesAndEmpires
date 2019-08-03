@@ -23,7 +23,10 @@ private:
 
 	int player_turn_count, player_count;
 	int base_money_per_turn, current_money_per_turn;
-	string selectedAction;
+	string selectedAction;//dk if needed...
+	string to_be_built = "NONE";
+	string to_be_trained = "NONE";
+	int ID = 6;
 
 	AbstractTile* SelectedTile = nullptr;
 	AbstractUnit* SelectedUnit = nullptr;
@@ -38,6 +41,58 @@ private:
 
 
 public:
+
+	bool isSurroundAllOccupied(int x, int y) {
+		if (x + 1 < 20 && getTileAt(x + 1, y)->isOccupied() && /*S*/
+			x + 1 > 0 && y + 1 < 30 && getTileAt(x + 1, y + 1)->isOccupied() && /*SE*/
+			y + 1 < 30 && getTileAt(x, y + 1)->isOccupied() || /*E*/
+			x - 1 >= 0 && y + 1 < 30 && getTileAt(x - 1, y + 1)->isOccupied() && /*NE*/
+			x - 1 >= 0 && getTileAt(x - 1, y)->isOccupied() || /*N*/
+			x - 1 >= 0 && y - 1 >= 0 && getTileAt(x - 1, y - 1)->isOccupied() && /*NW*/
+			y - 1 >= 0 && getTileAt(x, y - 1)->isOccupied() && /*W*/
+			x + 1 < 20 && y - 1 >= 0 && getTileAt(x + 1, y - 1)->isOccupied() /*SW*/)
+			return true;
+		return false;
+	}
+
+
+	int getGeneratorId() const {
+		return this->ID;
+	}
+	void incrementGeneratorId() {
+		this->ID++;
+	}
+
+	void setSelectedBuilding(string building) {
+		this->to_be_built = building;
+	}
+
+	void setSelectedUnit(string unit) {
+		this->to_be_trained = unit;
+	}
+
+	string getSelectedBuilding() const {
+		return this->to_be_built;
+	}
+
+	string getSelectedTrained() const {
+		return this->to_be_trained;
+	}
+
+	Player* getActivePlayer() {
+		return this->players.at(this->player_turn_count % this->player_count);
+	}
+
+	int computeDistance(int x0, int y0, int x1, int y1){
+		float x00 = x0;
+		float y00 = y0;
+		float x11 = x1;
+		float y11 = y1;
+		float squaredDistance = (x11 - x00)*(x11 - x00) + (y11 - y00)*(y11 - y00);
+		float floatDistance = sqrt(squaredDistance);
+		int distance = floor(floatDistance);
+		return distance;
+	}
 
 
 	Player* getOwnerAt(int x, int y) {
@@ -114,13 +169,15 @@ public:
 	}
 
 	void clearUnitAt(int x, int y){
+		//Player* pl = this->getOwnerAt(x, y);
+		//pl->setUnitAt(new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 }, x, y);
 		Player* pl = this->getOwnerAt(x, y);
-		pl->setUnitAt(new EmptyUnit{ -1,-1,-1,-1,"-1" }, x, y);
+		pl->deleteUnit(getUnitAt(x, y));
 
 
-		auto temp = this->unitMatrix.at(30 * y + x);
-		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1" };
-		delete temp;
+		//auto temp = this->unitMatrix.at(30 * y + x);
+		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
+		//delete temp;
 		this->tileMatrix.at(30 * y + x)->unoccupy();
 	}
 
@@ -154,7 +211,39 @@ public:
 		this->player_turn_count = 0;
 		this->player_count = 0;
 	}
+	~Map() {
+		//for (auto& tile : this->tileMatrix)
+		//	delete tile;
+		while (this->tileMatrix.size() > 0) {
+			delete tileMatrix.at(tileMatrix.size() - 1);
+			tileMatrix.pop_back();
+		}
 
+		//for (auto& unit : this->unitMatrix)
+		//	delete unit;
+		/*while (this->unitMatrix.size() > 0) {
+			delete unitMatrix.at(unitMatrix.size() - 1);
+			unitMatrix.pop_back();
+		}*/
+
+
+		//for (auto& pl : this->players)
+		//	delete pl;
+		while (this->players.size() > 0) {
+			delete players.at(players.size() - 1);
+			players.pop_back();
+		}
+		
+
+		while (this->unitMatrix.size() > 0) {//units will be deleted in the player destructor
+			unitMatrix.pop_back();
+		}
+
+		//if (this->SelectedTile != nullptr)//at this point, this is futile most likely...
+		//	delete SelectedTile;
+		//if (this->SelectedUnit != nullptr)
+		//	delete SelectedUnit;
+	}
 
 
 	void setSelectedAction(string action) {
@@ -279,8 +368,7 @@ public:
 		//all actions undergone must be stopped!
 
 		player_turn_count++;
-		//base_money_per_turn = 1 + player_turn_count / player_count;
-		base_money_per_turn++;
+		base_money_per_turn += player_turn_count % 2;
 		current_money_per_turn = base_money_per_turn;
 	}
 
@@ -291,9 +379,11 @@ public:
 		int damagePerHit = -1;
 		int hitChance = -1;
 		string type = "-1";
+		float speed = -1;
+		int range = -1;
 		for (int i = 0; i < 30; i++)
 			for (int j = 0; j < 20; j++) {
-				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance,type };
+				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance, type, speed, range };
 				this->unitMatrix.push_back(unit);
 				EmptyTile* tile = new EmptyTile{ false,false };
 				this->tileMatrix.push_back(tile);
@@ -304,7 +394,7 @@ public:
 	void moveAction(/*AbstractTile* Source, */AbstractTile* Destination, /*AbstractUnit* Unit,*/ int destX, int destY) {
 		auto exUnit = getUnitAt(selectedX, selectedY);//get unit @ source
 		this->unitMatrix.at(30 * destY + destX) = exUnit;//move the pointer to the unit to another tile
-		this->unitMatrix.at(30 * selectedY + selectedX) = new EmptyUnit{ -1,-1,-1,-1,"-1" };//mark the last position of the unis as free
+		this->unitMatrix.at(30 * selectedY + selectedX) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };//mark the last position of the unis as free
 		this->SelectedTile->unoccupy();
 		Destination->occupy();
 	}
@@ -325,20 +415,20 @@ public:
 			this->actionSucceded = true;
 		}
 	}
-	void fortifyAction(AbstractUnit* Fortificator, AbstractUnit* Fortificated);
-	void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
-	void repairAction(AbstractUnit* Repairer, AbstractUnit* Building);
-	void destroyAction(AbstractUnit* Destroyed) {
-		//this->player_count->deleteUnit();
-		auto temp = Destroyed;
-		vector<int> xy = getXYbyUnit(Destroyed);
-		Destroyed = new EmptyUnit{ -1,-1,-1,-1,"-1" };//this could go
-		delete temp;//nu ii place aici ca se sterge...
-		//ALSO MODIFY IN 
-		int x = xy.at(0);
-		int y = xy.at(1);
-		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1" };
-		this->tileMatrix.at(30 * y + x)->unoccupy();
-	}
+	//void fortifyAction(AbstractUnit* Fortificator, AbstractUnit* Fortificated);
+	//void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
+	//void repairAction(AbstractUnit* Repairer, AbstractUnit* Building);
+	//void destroyAction(AbstractUnit* Destroyed) {
+	//	//this->player_count->deleteUnit();
+	//	auto temp = Destroyed;
+	//	vector<int> xy = getXYbyUnit(Destroyed);
+	//	Destroyed = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };//this could go
+	//	delete temp;//nu ii place aici ca se sterge...
+	//	//ALSO MODIFY IN 
+	//	int x = xy.at(0);
+	//	int y = xy.at(1);
+	//	this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
+	//	this->tileMatrix.at(30 * y + x)->unoccupy();
+	//}
 };
 

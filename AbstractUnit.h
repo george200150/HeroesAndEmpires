@@ -25,28 +25,55 @@ protected:
 	int currentHitChance;// hit chance along unit's lifespan
 	string type;//LAND or WATER
 	string photo;//only the name of the unit (should be the unit's name)
+	
+	float speed;
+	int range;
 	//int totalCapacity;
 	//int occupiedCapacity;
 	//bool canFortify;
 	//this implies one more inheritance, as there must be a vector of units on each tile...
 	//(composite pattern)
-
-	//Player* owner;- i could easily search in all players @ (x,y) for that unit. if found, there you have the owner.
-
-	//vector<AbstractAction*> actions;
 	vector<string> actions;
+	vector<string> trainable;
 public:
+
+	virtual vector<string> getTrainable() const = 0;
 
 	/*
 	Constructor of the AbstractUnit class. This method sets the id, hp, damage, hit chance and the type.
 	Also, it automatically sets the shape of the unit to a 50x50 square.
 	*/
-	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type) : id{ id }, baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit }, baseHitChance{ hitChance }, type{ type } {
+	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type, float speed, int range) :
+		id{ id }, baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit },
+		baseHitChance{ hitChance }, type{ type }, speed{ speed }, range{ range }{
 		setRect(0, 0, 50, 50);
 		currentHealth = baseHealth;
 		currentDamagePerHit = damagePerHit;
 		currentHitChance = hitChance;
 	}
+
+	/*
+	Method that returns an integer representing the speed of the unit.
+	The speed determines how many tiles the unit can be moved at the same price as other units.
+	i.e. :
+	speed = 1   default.
+	speed = 2   unit can go twice more than default in one turn.
+	speed = 0.5 unit is twice as slower as the default speed.
+	*/
+	virtual float getSpeed() const = 0;
+
+
+	
+
+	/*
+	Method that returns an integer representing the range of the unit.
+	The range determines how far the unit can attack (interact with) other units.
+	the value is represented in tiles.
+	*/
+	virtual int getRange() const = 0;
+
+
+
 
 	/*
 	Method that returns as a string the name of the photo of each object.
@@ -199,12 +226,14 @@ public:
 
 class AbstractCharacter : public AbstractUnit {
 protected:
-	//int speed; - this gonna be my first headache for today
-	//int range;
 public:
-	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
+	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
 	}
 
+	virtual vector<string> getTrainable() const override = 0;
+	virtual float getSpeed() const override = 0;
+	virtual int getRange() const override = 0;
 	virtual string getPhoto() const override = 0;
 	virtual void setPhoto(string newPhoto) override = 0;
 	virtual vector<string> getActions() override = 0;
@@ -230,11 +259,14 @@ public:
 
 class AbstractBuilding : public AbstractUnit {
 protected:
-	//int range;
 public:
-	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
+	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
 	}
 
+	virtual vector<string> getTrainable() const override = 0;
+	virtual float getSpeed() const override { return 0; };
+	virtual int getRange() const override = 0;
 	virtual string getPhoto() const override = 0;
 	virtual void setPhoto(string newPhoto) override = 0;
 	virtual vector<string> getActions() override = 0;
@@ -261,9 +293,13 @@ public:
 class EmptyUnit : public AbstractUnit {
 protected:
 public:
-	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type) : AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type } {
+	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
 	}
 
+	virtual vector<string> getTrainable() const override { vector<string> v;  return v; };
+	virtual float getSpeed() const override { return -1; }
+	virtual int getRange() const override { return -1; };
 	virtual string getPhoto() const override { return "-1"; }
 	virtual void setPhoto(string newPhoto) override {}
 	virtual vector<string> getActions() override { vector<string> v;  return v; }
@@ -287,26 +323,29 @@ public:
 class Villager : public AbstractCharacter {
 protected:
 public:
-	Villager(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
+	Villager(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 1, 1 } {
 		this->photo = "villager";
 
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		/*AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",2 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "MOVE",1 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "FORTIFY",1 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "BUILD",3 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "REPAIR",3 };
-		this->actions.push_back(action); - THIS HAS GONE*/
 		this->actions.push_back("ATTACK");
 		this->actions.push_back("MOVE");
 		this->actions.push_back("FORTIFY");
 		this->actions.push_back("BUILD");
 		this->actions.push_back("REPAIR");
+	}
+
+	vector<string> getTrainable() const override {
+		//return this->trainable;
+		vector<string> v;  return v;
+	}
+
+	float getSpeed() const override {
+		return this->speed;
+	}
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -388,13 +427,21 @@ public:
 class Tower : public AbstractBuilding {
 protected:
 public:
-	Tower(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
+	Tower(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 3 } {
 		this->photo = "tower";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		/*AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",1 };
-		this->actions.push_back(action);*/
 		this->actions.push_back("ATTACK");
+	}
+
+	//speed == 0;
+
+	vector<string> getTrainable() const override {
+		return this->trainable;
+	}
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -474,19 +521,26 @@ public:
 class Galleon : public AbstractCharacter {
 protected:
 public:
-	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER" } {
+	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER", 1, 2 } {
 		this->photo = "galleon";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		/*AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",2 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "MOVE",1 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "DOCK",1 };
-		this->actions.push_back(action);*/
 		this->actions.push_back("ATTACK");
 		this->actions.push_back("MOVE");
 		this->actions.push_back("DOCK");
+	}
+
+	vector<string> getTrainable() const override {
+		//return this->trainable;
+		vector<string> v;  return v;
+	}
+
+	float getSpeed() const override {
+		return this->speed;
+	}
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -567,16 +621,25 @@ public:
 class HorseArcher : public AbstractCharacter {
 protected:
 public:
-	HorseArcher(int id, int baseHealth, int damagePerHit, int hitChange) : AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND" } {
+	HorseArcher(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 2, 2 } {
 		this->photo = "horse_archer";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		/*AbstractAction* action;
-		action = new AbstractAction{ "ATTACK",2 };
-		this->actions.push_back(action);
-		action = new AbstractAction{ "MOVE",1 };
-		this->actions.push_back(action);*/
 		this->actions.push_back("ATTACK");
 		this->actions.push_back("MOVE");
+	}
+
+	vector<string> getTrainable() const override {
+		//return this->trainable;
+		vector<string> v;  return v;
+	}
+
+	float getSpeed() const override {
+		return this->speed;
+	}
+
+	int getRange() const override {
+		return this->range;
 	}
 
 	string getPhoto() const override {
@@ -601,6 +664,289 @@ public:
 	}
 
 	int getBaseHealth() const override {
+		return this->baseHealth;
+	}
+
+	void modifyBaseHealth(int newBH)  override {
+		this->baseHealth = newBH;
+	}
+
+
+	int getCurrentHealth() const  override {
+		return this->currentHealth;
+	}
+
+	void modifyCurrentHealth(int newCH)  override {
+		this->currentHealth = newCH;
+	}
+
+
+	int getBaseDamagePerHit() const  override {
+		return this->BaseDamagePerHit;
+	}
+
+	void modifyBaseDamagePerHit(int newBDPH)  override {
+		this->BaseDamagePerHit = newBDPH;
+	}
+
+
+	int getCurrentDamagePerHit() const  override {
+		return this->currentDamagePerHit;
+	}
+
+	void modifyCurrentDamagePerHit(int newCDPH)  override {
+		this->currentDamagePerHit = newCDPH;
+	}
+
+
+	int getBaseHitChance() const override {
+		return this->baseHitChance;
+	}
+	void modifyBaseHitChance(int newBHC) override {
+		this->baseHitChance = newBHC;
+	}
+
+
+	int getCurrentHitChance() const override {
+		return this->currentHitChance;
+	}
+	void modifyCurrentHitChance(int newCHC) override {
+		this->currentHitChance = newCHC;
+	}
+};
+
+
+class TownCenter : public AbstractBuilding {
+protected:
+public:
+	TownCenter(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 3 } {
+		this->photo = "town_center";
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
+		this->actions.push_back("TRAIN");
+		this->trainable.push_back("VILLAGER");
+	}
+
+	//speed == 0;
+
+	vector<string> getTrainable() const override {
+		return this->trainable;
+	}
+
+	int getRange() const override {
+		return this->range;
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
+	}
+
+	vector<string> getActions() override {
+		return this->actions;
+	}
+
+	virtual bool canMove() const override { return false; }
+
+	string getType() const override {
+		return this->type;
+	}
+
+	int getId() const override {
+		return this->id;
+	}
+
+	int getBaseHealth() const  override {
+		return this->baseHealth;
+	}
+
+	void modifyBaseHealth(int newBH)  override {
+		this->baseHealth = newBH;
+	}
+
+
+	int getCurrentHealth() const  override {
+		return this->currentHealth;
+	}
+
+	void modifyCurrentHealth(int newCH)  override {
+		this->currentHealth = newCH;
+	}
+
+
+	int getBaseDamagePerHit() const  override {
+		return this->BaseDamagePerHit;
+	}
+
+	void modifyBaseDamagePerHit(int newBDPH)  override {
+		this->BaseDamagePerHit = newBDPH;
+	}
+
+
+	int getCurrentDamagePerHit() const  override {
+		return this->currentDamagePerHit;
+	}
+
+	void modifyCurrentDamagePerHit(int newCDPH)  override {
+		this->currentDamagePerHit = newCDPH;
+	}
+
+
+	int getBaseHitChance() const override {
+		return this->baseHitChance;
+	}
+	void modifyBaseHitChance(int newBHC) override {
+		this->baseHitChance = newBHC;
+	}
+
+
+	int getCurrentHitChance() const override {
+		return this->currentHitChance;
+	}
+	void modifyCurrentHitChance(int newCHC) override {
+		this->currentHitChance = newCHC;
+	}
+};
+
+class Dock : public AbstractBuilding {
+protected:
+public:
+	Dock(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "WATER", 0, 0 } {
+		this->photo = "dock";
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
+		this->actions.push_back("TRAIN");
+		this->trainable.push_back("GALLEON");
+	}
+
+	//speed == 0;
+
+	vector<string> getTrainable() const override {
+		return this->trainable;
+	}
+
+	int getRange() const override {
+		return this->range;
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
+	}
+
+	vector<string> getActions() override {
+		return this->actions;
+	}
+
+	virtual bool canMove() const override { return false; }
+
+	string getType() const override {
+		return this->type;
+	}
+
+	int getId() const override {
+		return this->id;
+	}
+
+	int getBaseHealth() const  override {
+		return this->baseHealth;
+	}
+
+	void modifyBaseHealth(int newBH)  override {
+		this->baseHealth = newBH;
+	}
+
+
+	int getCurrentHealth() const  override {
+		return this->currentHealth;
+	}
+
+	void modifyCurrentHealth(int newCH)  override {
+		this->currentHealth = newCH;
+	}
+
+
+	int getBaseDamagePerHit() const  override {
+		return this->BaseDamagePerHit;
+	}
+
+	void modifyBaseDamagePerHit(int newBDPH)  override {
+		this->BaseDamagePerHit = newBDPH;
+	}
+
+
+	int getCurrentDamagePerHit() const  override {
+		return this->currentDamagePerHit;
+	}
+
+	void modifyCurrentDamagePerHit(int newCDPH)  override {
+		this->currentDamagePerHit = newCDPH;
+	}
+
+
+	int getBaseHitChance() const override {
+		return this->baseHitChance;
+	}
+	void modifyBaseHitChance(int newBHC) override {
+		this->baseHitChance = newBHC;
+	}
+
+
+	int getCurrentHitChance() const override {
+		return this->currentHitChance;
+	}
+	void modifyCurrentHitChance(int newCHC) override {
+		this->currentHitChance = newCHC;
+	}
+};
+
+class Barracks : public AbstractBuilding {
+protected:
+public:
+	Barracks(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 0 } {
+		this->photo = "barracks";
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
+		this->actions.push_back("TRAIN");
+		this->trainable.push_back("HORSE ARCHER");
+	}
+
+	//speed == 0;
+
+	vector<string> getTrainable() const override {
+		return this->trainable;
+	}
+
+	int getRange() const override {
+		return this->range;
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
+	}
+
+	vector<string> getActions() override {
+		return this->actions;
+	}
+
+	virtual bool canMove() const override { return false; }
+
+	string getType() const override {
+		return this->type;
+	}
+
+	int getId() const override {
+		return this->id;
+	}
+
+	int getBaseHealth() const  override {
 		return this->baseHealth;
 	}
 

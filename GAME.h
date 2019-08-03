@@ -23,8 +23,180 @@ using std::vector;
 using std::to_string;
 
 
-#include <qwidget.h>//...
-#include <qformlayout.h>//...
+#include <qwidget.h>
+#include <qformlayout.h>
+
+
+//#include <QtCore>
+//#include <QtGui>
+//#include <QtWidgets>
+
+
+
+class BuildingChooser : public QWidget/*AbstractUnitChooser*/ {//this gets the id from map. (no static bs)
+private:
+
+	///*BuildAction**/AbstractAction* action;
+	Map* map;
+	QLabel* labText = new QLabel{ "SELECT A BUILDING TO CONSTRUCT: " };
+	QPushButton* btnSelect = new QPushButton{ "SELECT" };
+	QListWidget* lst = new QListWidget;
+
+
+	void setupGUI() {
+		QVBoxLayout* linit = new QVBoxLayout;
+		this->setLayout(linit);
+
+		QWidget* wdg = new QWidget;
+		QVBoxLayout* lv = new QVBoxLayout;
+		wdg->setLayout(lv);
+		lv->addWidget(labText);
+		lv->addWidget(lst);
+		lv->addWidget(btnSelect);
+
+		linit->addWidget(wdg);
+	}
+
+	void initSignalSlots() {
+		QObject::connect(btnSelect, &QPushButton::clicked, this, &BuildingChooser::choose);
+	}
+
+	void initialState() {
+		QListWidgetItem* item1 = new QListWidgetItem;
+		item1->setText("TOWER");
+		item1->setData(Qt::UserRole, 1);
+
+		QListWidgetItem* item2 = new QListWidgetItem;
+		item2->setText("TOWN CENTER");
+		item2->setData(Qt::UserRole, 2);
+
+		QListWidgetItem* item3 = new QListWidgetItem;
+		item3->setText("DOCK");
+		item3->setData(Qt::UserRole, 3);
+
+		QListWidgetItem* item4 = new QListWidgetItem;
+		item4->setText("BARRACKS");
+		item4->setData(Qt::UserRole, 4);
+
+		this->lst->addItem(item1);
+		this->lst->addItem(item2);
+		this->lst->addItem(item3);
+		this->lst->addItem(item4);
+	}
+public:
+
+	void choose() {
+		if (this->lst->selectedItems().isEmpty()) {
+			QMessageBox::warning(this, "Warning", "YOU MUST SELECT A BUILDING FIRST!");
+		}
+		else {
+			auto item = this->lst->selectedItems().at(0);
+			auto id = item->data(Qt::UserRole);
+
+			if (id == 1) {
+				this->map->setSelectedBuilding("TOWER");
+			}
+			else if (id == 2) {
+				this->map->setSelectedBuilding("TOWN_CENTER");
+			}
+			else if (id == 3) {
+				this->map->setSelectedBuilding("DOCK");
+			}
+			else if (id == 4) {
+				this->map->setSelectedBuilding("BARRACKS");
+			}
+
+
+			this->close();
+		}
+	}
+
+	BuildingChooser(Map* map) : map{ map } {
+		this->setAttribute(Qt::WA_DeleteOnClose);
+		setupGUI();
+		initSignalSlots();
+		initialState();
+	}
+};
+
+
+
+
+class UnitChooser : public QWidget{//we should also know what building is training (i.e. barracks don't train villager)
+private:
+
+	///*BuildAction**/AbstractAction* action;
+	Map* map;
+	QLabel* labText = new QLabel{ "SELECT A UINT TO TRAIN: " };
+	QPushButton* btnSelect = new QPushButton{ "SELECT" };
+	QListWidget* lst = new QListWidget;
+	int x, y;
+
+	void setupGUI() {
+		QVBoxLayout* linit = new QVBoxLayout;
+		this->setLayout(linit);
+
+		QWidget* wdg = new QWidget;
+		QVBoxLayout* lv = new QVBoxLayout;
+		wdg->setLayout(lv);
+		lv->addWidget(labText);
+		lv->addWidget(lst);
+		lv->addWidget(btnSelect);
+
+		linit->addWidget(wdg);
+	}
+
+	void initSignalSlots() {
+		QObject::connect(btnSelect, &QPushButton::clicked, this, &UnitChooser::choose);
+	}
+
+	void initialState() {
+		auto building = this->map->getUnitAt(x, y);
+		auto trainables = building->getTrainable();
+		for (const auto& unit : trainables) {
+			QListWidgetItem* item = new QListWidgetItem;
+			item->setText(QString::fromStdString(unit));
+			lst->addItem(item);
+		}
+	}
+public:
+
+	void choose() {
+		if (this->lst->selectedItems().isEmpty()) {
+			QMessageBox::warning(this, "Warning", "YOU MUST SELECT A BUILDING FIRST!");
+		}
+		else {
+			auto item = this->lst->selectedItems().at(0);
+			auto rawUnit = item->text();
+			string unit = rawUnit.toStdString();
+
+			if (unit == "VILLAGER") {
+				this->map->setSelectedUnit("VILLAGER");
+			}
+			else if (unit == "HORSE ARCHER") {
+				this->map->setSelectedUnit("HORSE ARCHER");
+			}
+			else if (unit == "GALLEON") {
+				this->map->setSelectedUnit("GALLEON");
+			}
+
+
+			this->close();
+		}
+	}
+
+
+	UnitChooser(Map* map, int x, int y) : map{ map }, x{ x }, y{y} {
+		this->setAttribute(Qt::WA_DeleteOnClose);
+		setupGUI();
+		initSignalSlots();
+		initialState();
+	}
+};
+
+
+
+
 
 
 class ActionWindow : public QWidget {
@@ -34,6 +206,7 @@ private:
 	AbstractUnit* unit = nullptr;
 	QListWidget* lst = new QListWidget;
 	QPushButton* btnSelect = new QPushButton{ "SELECT ACTION" };
+	QLabel* labAct = new QLabel{ "ACTIONS THIS UNIT CAN EXECUTE: " };
 
 	void guiSetup() {
 		QVBoxLayout* linit = new QVBoxLayout;
@@ -42,7 +215,7 @@ private:
 		QWidget* wdg = new QWidget;
 		QVBoxLayout* lv = new QVBoxLayout;
 		wdg->setLayout(lv);
-		lv->addWidget(new QLabel{"ACTIONS THIS UNIT CAN EXECUTE: "});
+		lv->addWidget(labAct);
 		lv->addWidget(lst);
 		lv->addWidget(btnSelect);
 
@@ -74,6 +247,7 @@ private:
 
 public:
 	ActionWindow(Map* map, AbstractTile* tile, AbstractUnit* unit) : map{ map }, tile{ tile }, unit{ unit } {
+		this->setAttribute(Qt::WA_DeleteOnClose);
 		guiSetup();
 		initSignalSlots();
 		initialGUIState();
@@ -116,7 +290,7 @@ private:
 			this->labOccupied->setText(this->labOccupied->text() + QString::fromStdString("TRUE"));
 			//add info about the occupant in the list
 			QListWidgetItem* item = new QListWidgetItem;
-			string name = "unit @ (" + to_string(x) + "," + to_string(y) + ")";
+			string name = unit->getType() + " unit @ (" + to_string(x) + "," + to_string(y) + ")";
 			item->setText(QString::fromStdString(name));
 
 			//we could map the id so that we get the name of the unit
@@ -129,10 +303,18 @@ private:
 			QListWidgetItem* itemC = new QListWidgetItem; 
 			string infoC = "HitChance: " + to_string(unit->getCurrentHitChance()) + "/" + to_string(unit->getBaseHitChance());
 			itemC->setText(QString::fromStdString(infoC));
+			QListWidgetItem* itemS = new QListWidgetItem;
+			string infoS = "Speed: " + to_string(unit->getSpeed());
+			itemS->setText(QString::fromStdString(infoS));
+			QListWidgetItem* itemR = new QListWidgetItem;
+			string infoR = "Range: " + to_string(unit->getRange());
+			itemR->setText(QString::fromStdString(infoR));
 			lst->addItem(item);
 			lst->addItem(itemH);
 			lst->addItem(itemD);
 			lst->addItem(itemC);
+			lst->addItem(itemS);
+			lst->addItem(itemR);
 		}
 		else {
 			this->labOccupied->setText(this->labOccupied->text() + QString::fromStdString("FALSE"));
@@ -179,13 +361,18 @@ private:
 
 	Map* map;
 
-	QGraphicsRectItem* SelectedMark = new QGraphicsRectItem;// (to be deleted in the destructor)	!!!!	!!!!	!!!!	!!!!
+	QGraphicsRectItem* SelectedMark = new QGraphicsRectItem;
 
 	GameEngine* engine;
 
 	QGraphicsScene* scene;
 
-	InfoWindow* wndw = nullptr;
+
+	QGraphicsRectItem* infoRect;
+	QLabel* labPlayer = new QLabel{ "NOW PLAYING: " };
+	QLabel* labCredits = new QLabel{ "CREDITS LEFT: " };
+	QPushButton* btnEndTurn = new QPushButton{ "END TURN" };
+	
 
 
 	AbstractTile* getTileAt(int x, int y) {
@@ -205,31 +392,40 @@ private:
 	}
 
 
-
+	void addUnitNoShow(AbstractUnit* unit, int x, int y) {
+		unit->setPos(x * 50, y * 50);
+		this->map->addUnit(unit, x, y);
+	}
 	void addUnit(AbstractUnit* unit, int x, int y) {
 		unit->setPos(x * 50, y * 50);
 		scene->addItem(unit);
 		this->map->addUnit(unit, x, y);
 	}
 
+
+	/*
+	EACH TIME WE CHANGE THE TURN, WE SHOULD AUTOMATISE THE BUILDINGS (Towers + fortified ones)
+	TO ATTACK ANY ENEMY IN RANGE (all the enemies in range)
+	*/
 	void changeTurn() {
-		QMessageBox::information(this, "Info", "TURN TIME EXPIRED!");
+		QMessageBox::information(this, "Info", "YOUR TURN HAS ENDED!");
 		this->map->deleteSelection();
 		this->scene->removeItem(SelectedMark);
 
 		//all actions undergone must be stopped!
 
 		this->map->changeTurn();
+
 	}
 
 
 	void initSignalSlots() {
 
-		//advanceGame invoked every time
 		QObject::connect(engine, &GameEngine::turnFinished, this, &GAME::changeTurn);
 
 		QObject::connect(engine, &GameEngine::allUnitsGenerated, this, &GAME::InitUnitColours);
 
+		//advanceGame invoked every time
 		QObject::connect(engine, &GameEngine::tick, this, &GAME::advanceGame);
 
 		QObject::connect(engine, &GameEngine::tileCreated, [&](AbstractTile* tile, int x, int y) {
@@ -237,16 +433,15 @@ private:
 		});
 
 		QObject::connect(engine, &GameEngine::unitCreatedAt, [&](AbstractUnit* unit, int x, int y) {
-			addUnit(unit, x, y);
+			//addUnit(unit, x, y);
+			addUnitNoShow(unit, x, y);//this does not help that much reducing memory use...
 		});
 
-		QObject::connect(engine, &GameEngine::gameFinished, [&](bool win) {
-			if (win) {
-				QMessageBox::information(this, "Info", "You win!!!");
-			}
-			else {
-				QMessageBox::information(this, "Info", "You lose!!!");
-			}
+		QObject::connect(engine, &GameEngine::gameFinished, [&](string winner) {
+
+			string str = winner + " has won the game !!!";
+			QString qstr = QString::fromStdString(str);
+			QMessageBox::information(this, "Info", qstr);
 		});
 	}
 
@@ -275,6 +470,21 @@ private:
 			If the user clicks RMB
 			THEN...
 			*/
+			if (this->map->getSelectedAction() == "BUILD") {
+				/*
+				use the selected action in map
+				(which is a string...
+				*/
+				BuildingChooser* bc = new BuildingChooser{ this->map };
+				bc->show();
+			}
+			else if (this->map->getSelectedAction() == "TRAIN") {
+				int xx = this->map->getSelectedX();
+				int yy = this->map->getSelectedY();
+				UnitChooser* uc = new UnitChooser{ this->map, xx, yy };
+				uc->show();
+			}
+			else
 			if (!this->map->wasSelectionNULL() && this->map->isSameSelection(x, y) && tile != nullptr && unit != nullptr && unit->getId() != -1) {
 				/*
 				If there was selected a tile beforehand
@@ -343,22 +553,69 @@ private:
 						string actName = this->map->getSelectedAction();
 						AbstractActionCreator actionCreator = AbstractActionCreator{ this->map,sourcex,sourcey,x,y,actName };
 						AbstractAction* act = actionCreator.returnActionCreated();
+						//if (act->getName() == "BUILD") {
+						//	BuildingChooser* bc = new BuildingChooser{ /*b*/act };
+						//	bc->show();
+						//}
 						try {
 							
-							if (act->getBaseCost() > this->map->getBaseMoneyPerTurn())//do not have enough credits for this action
-								throw ExecutionException();
+							if (act->getCurrentCost() > this->map->getCurrentMoneyLeft())//do not have enough credits for this action
+								throw ExecutionException{"THE ACTION REQUIRES TOO MANY CREDITS!!!"};
 
 							act->execute();//all the data modified must be transmitted to players(move, destroy)
 							
 							this->map->deleteSelection();
 							this->scene->removeItem(SelectedMark);
-							this->map->payActionExecution(act->getBaseCost());//actually, the base cost is the cost * multiplier...
-							if (this->map->getBaseMoneyPerTurn() <= 0) {
+							this->map->payActionExecution(act->getCurrentCost());//actually, the base cost is the cost * multiplier...
+							/*if (this->map->getCurrentMoneyLeft() <= 0) {
 								this->engine->forceTurnFinish();
-							}
+							}*/
 						}
-						catch (ExecutionException&) {
-							QMessageBox::warning(this, "ACTION FAILED!", "You cannot execute that action!");
+						catch (ExecutionException& ex) {
+							QMessageBox::warning(this, "ACTION FAILED!", QString::fromStdString(ex.print()));
+						}
+						catch (MessageException& ex) {
+							QMessageBox::warning(this, "ACTION SUCCEDED!", QString::fromStdString(ex.print()));
+							this->map->payActionExecution(act->getCurrentCost());//actually, the base cost is the cost * multiplier...
+						}
+						catch (BuildingException& ex) {
+							QMessageBox::warning(this, "ACTION SUCCEDED!", QString::fromStdString(ex.print()));
+							auto player = this->map->getActivePlayer();
+							auto mapUnit = this->map->getUnitAt(x, y);
+							auto playerUnit = player->getUnitAt(x, y);//it's null;  idk y ????
+
+							mapUnit->setPos(x * 50, y * 50);
+							mapUnit->setPhoto(mapUnit->getPhoto() + player->getColor());
+							mapUnit->setBrush(QImage(QString::fromStdString(mapUnit->getPhoto()) + ".fw.png"));
+							//addUnit(mapUnit, x, y);
+							player->forceAddUnit(mapUnit, x, y);
+							this->scene->addItem(mapUnit);
+
+
+							//something's wrong... this was 0xFFFFFFFFFFFF...
+
+							//this->scene->removeItem(this->map->getUnitAt(x, y));
+
+							//this->scene->addItem(this->map->getActivePlayer()->getUnitAt(x,y));
+							//player->setUnitAt(this->map->getUnitAt(x, y), x, y);
+							this->map->payActionExecution(act->getCurrentCost());//actually, the base cost is the cost * multiplier...
+						}
+						catch (TrainingException& ex) {
+							QMessageBox::warning(this, "ACTION SUCCEDED!", QString::fromStdString(ex.print()));
+
+
+							auto player = this->map->getActivePlayer();
+							auto mapUnit = this->map->getUnitAt(x, y);
+							auto playerUnit = player->getUnitAt(x, y);//it's null;  idk y ????
+
+							mapUnit->setPos(x * 50, y * 50);
+							mapUnit->setPhoto(mapUnit->getPhoto() + player->getColor());
+							mapUnit->setBrush(QImage(QString::fromStdString(mapUnit->getPhoto()) + ".fw.png"));
+							//addUnit(mapUnit, x, y);
+							player->forceAddUnit(mapUnit, x, y);
+							this->scene->addItem(mapUnit);
+
+							this->map->payActionExecution(act->getCurrentCost());//actually, the base cost is the cost * multiplier...
 						}
 					}
 
@@ -379,7 +636,7 @@ private:
 		auto tile = getTileAt(x, y);
 		auto unit = getUnitAt(x, y);
 
-		wndw = new InfoWindow{ tile, unit, x, y };
+		InfoWindow* wndw = new InfoWindow{ tile, unit, x, y };
 		wndw->show();
 	}
 
@@ -391,9 +648,29 @@ private:
 
 	void advanceGame() {
 		int i;
-		if (this->map->getCurrentMoneyLeft() == 0) {
+		if (this->map->getCurrentMoneyLeft() <= 0) {
 			this->engine->forceTurnFinish();
 		}
+		for (auto pl : this->map->getAllPlayers()) {
+			if (pl->getRemainingUnits() == 0) {
+				this->engine->foundAWinner(pl->getName());
+			}
+		}
+
+		auto player = this->map->getActivePlayer();
+		auto str = player->getName();
+		labPlayer->setText("NOW PLAYING: " + QString::fromStdString(str));
+
+		if (player->getColor() == "RED") {
+			infoRect->setBrush(QBrush(QColor(255, 0, 0, 255)));
+		}
+		else {
+			infoRect->setBrush(QBrush(QColor(0, 0, 255, 255)));
+		}
+
+		auto strng = to_string(this->map->getCurrentMoneyLeft());
+		labCredits->setText("CREDITS LEFT: " + QString::fromStdString(strng));
+		
 	}
 
 
@@ -403,29 +680,37 @@ private:
 
 		setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 		setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-		setFixedSize(1500, 1000);
-		//setFixedSize(1800, 1000);
-		scene->setSceneRect(0, 0, 1500, 1000);
-		//scene->setSceneRect(0, 0, 1800, 1000);
+		//setFixedSize(1500, 1000);
+		setFixedSize(1800, 1000);
+		//scene->setSceneRect(0, 0, 1500, 1000);
+		scene->setSceneRect(0, 0, 1800, 1000);
 		setBackgroundBrush(QBrush(QColor(215, 214, 213, 127)));
 
-		/*QLabel* labPlayer = new QLabel{ "NOW PLAYING: " };
-		QPushButton* btnEndTurn = new QPushButton{ "END TURN" };
+		infoRect = new QGraphicsRectItem{ 0,0,200,100 };
+	
+		infoRect->setPos(1550, 250);
+		scene->addItem(infoRect);
 
-		QWidget* wdgStretch = new QWidget;
-		QHBoxLayout* layout = new QHBoxLayout;
-		wdgStretch->setLayout(layout);
-		layout->addStretch();
+		
 
-		QWidget* wdg = new QWidget;
+		QWidget* wdgInfo = new QWidget;
 		QFormLayout* lay = new QFormLayout;
-		wdg->setLayout(lay);
+		wdgInfo->setLayout(lay);
+
+		/*auto player = this->map->getActivePlayer();
+		auto str = player->getName();
+		labPlayer->setText("NOW PLAYING: " + QString::fromStdString(str));*/
 
 		lay->addRow(labPlayer);
-		lay->addRow(btnEndTurn);
+		lay->addRow(labCredits);
+		//lay->addRow(btnEndTurn);
 
-		scene->addWidget(wdgStretch);
-		scene->addWidget(wdg);*/
+		scene->addWidget(wdgInfo);
+		wdgInfo->move(1560, 275);
+
+		//QGraphicsView* graph = new QGraphicsView{};
+		
+
 		/*
 		I NEED TO CREATE SOME COMMANDS ON THE SCREEN
 		*/
@@ -456,6 +741,9 @@ private:
 				else {
 					this->map->getAllPlayers().at(1)->addUnit(this->map->getUnitAt(x, y), x, y);
 				}
+				/*
+				AT THE MOMENT, THERE CAN ONLY BE TWO PLAYERS
+				*/
 			}
 
 		setPlayerColours();
@@ -472,7 +760,7 @@ private:
 		for (auto& pos : this->map->getAllUnits()) {
 			this->scene->removeItem(pos);
 			for (auto player : this->map->getAllPlayers()) {
-				auto unit = player->getAllUnits().at(30 * y + x);
+				auto unit = player->getUnitAt(x, y);
 				if (unit->getId() != -1) {
 					this->scene->addItem(unit);
 					break;
@@ -491,13 +779,31 @@ private:
 
 public:
 	GAME(GameEngine* engine, Map* map) :engine{ engine }, map{ map } {
+		this->setAttribute(Qt::WA_DeleteOnClose);
 		setMouseTracking(true);
 		initScene();
 
 		initSignalSlots();
 
 		this->SelectedMark->setBrush(QBrush(QColor(255, 255, 0, 100)));
+		
 		this->SelectedMark->setRect(0, 0, 50, 50);
 	}
+	~GAME() {
+		if (this->map != nullptr)
+			delete map;
+		if (this->engine != nullptr)
+			delete engine;
+		if (this->SelectedMark != nullptr) {
+			this->scene->removeItem(SelectedMark);
+			delete SelectedMark;
+		}
+
+		delete infoRect;
+		qDeleteAll(scene->items());
+		delete this->scene;
+		
+	}
+
 };
 
