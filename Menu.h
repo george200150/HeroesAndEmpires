@@ -41,16 +41,11 @@ public:
 
 		GameEngine* engine = new GameEngine{};
 
-		//while (true) {}
 
 		Map* map = new Map{};
 
-		//while (true) {}
-
 		GAME* view = new GAME{ engine, map };
 
-
-		//while (true) {}
 
 		view->show();
 		engine->startGame();

@@ -108,7 +108,7 @@ public:
 
 	void addUnit(AbstractUnit* unit, int x, int y) {
 		auto temp = this->units.at(30 * y + x);
-		this->units.at(30 * y + x) = unit;/*MEMORY LEAK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+		this->units.at(30 * y + x) = unit;/*(used to be) MEMORY LEAK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 		delete temp;
 		
 		if(unit->getId() != -1)

@@ -269,6 +269,8 @@ public:
 		this->selectedX = -1;
 		this->selectedY = -1;
 		this->selectedAction = "NONE";
+		this->to_be_built = "NONE";
+		this->to_be_trained = "NONE";
 	}
 
 	bool UnitExistsInSelected(AbstractUnit* localSelectedUnit) {
@@ -415,20 +417,5 @@ public:
 			this->actionSucceded = true;
 		}
 	}
-	//void fortifyAction(AbstractUnit* Fortificator, AbstractUnit* Fortificated);
-	//void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
-	//void repairAction(AbstractUnit* Repairer, AbstractUnit* Building);
-	//void destroyAction(AbstractUnit* Destroyed) {
-	//	//this->player_count->deleteUnit();
-	//	auto temp = Destroyed;
-	//	vector<int> xy = getXYbyUnit(Destroyed);
-	//	Destroyed = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };//this could go
-	//	delete temp;//nu ii place aici ca se sterge...
-	//	//ALSO MODIFY IN 
-	//	int x = xy.at(0);
-	//	int y = xy.at(1);
-	//	this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
-	//	this->tileMatrix.at(30 * y + x)->unoccupy();
-	//}
 };
 

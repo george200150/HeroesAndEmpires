@@ -8,25 +8,6 @@ using std::string;
 #include "AbstractTiles.h"
 
 
-//class AbstractAction{
-//protected:
-//	string name;
-//	int cost;
-//public:
-//	AbstractAction(string name, int cost) : name{ name }, cost{ cost } {}
-//
-//	virtual string getName() const {
-//		return this->name;
-//	}
-//
-//	virtual int getCost() const {
-//		return this->cost;
-//	}
-//
-//	//virtual void execute() = 0;
-//
-//	virtual ~AbstractAction() = default;
-//};
 
 
 class BuildingException {
@@ -347,7 +328,7 @@ public:
 
 		auto tile = this->map->getTileAt(effectX, effectY);
 		if (tile->isOccupied() || 
-			tile->getType() == "WATER" && to_be_built->getType() == "GRASS" || 
+			tile->getType() == "WATER" && to_be_built->getType() == "LAND" || 
 			tile->getType() == "GRASS" && to_be_built->getType() == "WATER") {
 			delete to_be_built;//memory leaks if not exception safe
 			throw ExecutionException{ "THAT TILE DOES NOT ALLOW THE CONSTRUCTION!" };
@@ -410,7 +391,7 @@ public:
 		AbstractAction{ map ,baseCost, sourceX, sourceY, effectX,effectY } {}
 	void execute() override {
 		//execute the attack action from Source(Trainer) to Destination(Trainee).
-		
+
 		if (this->to_be_trained == nullptr) {
 			throw ExecutionException{ "NO UNIT WAS SELECTED!" };
 		}
@@ -420,7 +401,7 @@ public:
 			throw ExecutionException{ "FREE SURROUNDING AREA FIRST!!!" };
 		}
 
-		
+
 		int distance = this->map->computeDistance(sourceX, sourceY, effectX, effectY);
 		if (distance > 1) {
 			delete this->to_be_trained;
@@ -445,66 +426,6 @@ public:
 				throw TrainingException{ "TRAINING..." };
 			}
 		}
-		//auto unitAt = this->map->getUnitAt(sourceX, sourceY);
-		/*IF THE SOURCE BUILDING ALLOWS TRAINING FOR THAT UNIT TYPE, THEN...*/
-
-		//0 <= x < 20
-		//0 <= y < 30
-
-		//if (x + 1 < 20 && !this->map->getTileAt(x, y + 1)->isOccupied() && this->map->getTileAt(x + 1, y)->getType() == "GRASS" && this->to_be_trained->getType() == "WATER" ||
-		//		this->map->getTileAt(x + 1, y)->getType() == "WATER" && this->to_be_trained->getType() == "LAND"){//S
-		//	this->map->getTileAt(x + 1, y)->occupy();
-		//	this->map->addUnit(to_be_trained, x + 1, y);
-		//}
-		//else if (x + 1 < 20 && y + 1 < 30 && !this->map->getTileAt(x + 1, y + 1)->isOccupied()) {//SE
-		//	this->map->getTileAt(x + 1, y + 1)->occupy();
-		//	this->map->addUnit(to_be_trained, x + 1, y + 1);
-		//}
-		//else if (y + 1 < 30 && !this->map->getTileAt(x, y + 1)->isOccupied()) {//E
-		//	this->map->getTileAt(x, y + 1)->occupy();
-		//	this->map->addUnit(to_be_trained, x, y + 1);
-		//}
-		//else if (x - 1 >= 0 && y + 1 < 30 && !this->map->getTileAt(x - 1, y + 1)->isOccupied()) {//NE
-		//	this->map->getTileAt(x - 1, y + 1)->occupy();
-		//	this->map->addUnit(to_be_trained, x - 1, y + 1);
-		//}
-		//else if (x - 1 >= 0 && !this->map->getTileAt(x - 1, y)->isOccupied()) {//N
-		//	this->map->getTileAt(x - 1, y)->occupy();
-		//	this->map->addUnit(to_be_trained, x - 1, y);
-		//}
-		//else if (x - 1 >= 0 && y - 1 >= 0 && !this->map->getTileAt(x - 1, y - 1)->isOccupied()) {//NW
-		//	this->map->getTileAt(x - 1, y - 1)->occupy();
-		//	this->map->addUnit(to_be_trained, x - 1, y - 1);
-		//}
-		//else if (y - 1 >= 0 && !this->map->getTileAt(x, y - 1)->isOccupied()) {//W
-		//	this->map->getTileAt(x, y - 1)->occupy();
-		//	this->map->addUnit(to_be_trained, x, y - 1);
-		//}
-		//else if (x + 1 < 20 && y - 1 >= 0 && !this->map->getTileAt(x + 1, y - 1)->isOccupied()) {//SW
-		//	this->map->getTileAt(x + 1, y - 1)->occupy();
-		//	this->map->addUnit(to_be_trained, x + 1, y - 1);
-		//}
-		//else {
-		//	delete this->to_be_trained;
-		//	throw ExecutionException{ "NOT ENOUGH ROOM AROUND THE BUILDING!!!" };
-		//}
-
-		////auto tile = this->map->getTileAt(effectX, effectY);
-		////if (tile->isOccupied() ||
-		////	tile->getType() == "WATER" && to_be_built->getType() == "GRASS" ||
-		////	tile->getType() == "GRASS" && to_be_built->getType() == "WATER") {
-		////	delete to_be_built;//memory leaks if not exception safe
-		////	throw ExecutionException{ "THAT TILE DOES NOT ALLOW THE CONSTRUCTION!" };
-		////}
-
-		////else {
-		////	tile->occupy();
-		////	/*THE UNIT IS NOT GOING TO BE SHOWN ON MAP :o*/
-		////	to_be_built->setPos(50 * effectX, 50 * effectY);
-		////	this->map->addUnit(to_be_built, effectX, effectY);
-		////	throw BuildingException{ "BUILDING..." };
-		////}
-
 
 		//void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
 	}
@@ -720,99 +641,10 @@ public:
 	void choose() override {}
 };
 
-//class BuildingChooser : public AbstractUnitChooser {//this gets the id from map. (no static bs)
-//private:
-//
-//	/*BuildAction**/AbstractAction* action;
-//	QLabel* labText = new QLabel{ "SELECT A BUILDING TO CONSTRUCT: " };
-//	QPushButton* btnSelect = new QPushButton{ "SELECT" };
-//	QListWidget* lst = new QListWidget;
-//
-//
-//	void setupGUI(){
-//		QVBoxLayout* linit = new QVBoxLayout;
-//		this->setLayout(linit);
-//
-//		QWidget* wdg = new QWidget;
-//		QVBoxLayout* lv = new QVBoxLayout;
-//		wdg->setLayout(lv);
-//		lv->addWidget(labText);
-//		lv->addWidget(lst);
-//		lv->addWidget(btnSelect);
-//
-//		linit->addWidget(wdg);
-//	}
-//
-//	void initSignalSlots() {
-//		QObject::connect(btnSelect, &QPushButton::clicked, this, &BuildingChooser::choose);
-//	}
-//
-//	void initialState() {
-//		QListWidgetItem* item1 = new QListWidgetItem;
-//		item1->setText("TOWER");
-//		item1->setData(Qt::UserRole, 1);
-//
-//		QListWidgetItem* item2 = new QListWidgetItem;
-//		item2->setText("TOWN CENTER");
-//		item2->setData(Qt::UserRole, 2);
-//
-//		QListWidgetItem* item3 = new QListWidgetItem;
-//		item3->setText("DOCK");
-//		item3->setData(Qt::UserRole, 3);
-//
-//		QListWidgetItem* item4 = new QListWidgetItem;
-//		item4->setText("BARRACKS");
-//		item4->setData(Qt::UserRole, 4);
-//
-//		this->lst->addItem(item1);
-//		this->lst->addItem(item2);
-//		this->lst->addItem(item3);
-//		this->lst->addItem(item4);
-//	}
-//public:
-//
-//	void choose() {
-//		if (this->lst->selectedItems().isEmpty()) {
-//			QMessageBox::warning(this, "Warning", "YOU MUST SELECT A BUILDING FIRST!");
-//		}
-//		else {
-//			static int ID = 6;
-//			auto item = this->lst->selectedItems().at(0);
-//			auto id = item->data(Qt::UserRole);
-//			if (id == 1) {
-//				action->setBuilding(new Tower{ ID,500,20,75 });//Uh Oh! id is unknown...
-//				ID++;
-//			}
-//			else if (id == 2) {
-//				action->setBuilding(new TownCenter{ ID,1000,0,100 });
-//				ID++;
-//			}
-//			else if (id == 3) {
-//				action->setBuilding(new Dock{ ID,350,0,0 });
-//				ID++;
-//			}
-//			else if (id == 4) {
-//				action->setBuilding(new Barracks{ ID,400,0,0 });
-//				ID++;
-//			}
-//
-//
-//			this->close();
-//		}
-//	}
-//
-//
-//	BuildingChooser(AbstractAction* action) : action{ action } {
-//		this->setAttribute(Qt::WA_DeleteOnClose);
-//		setupGUI();
-//		initSignalSlots();
-//		initialState();
-//	}
-//};
 
-/*
-TO BE REMEMBERED AND LATER FIXED. COSTS MUST BE SOMEHOW ABOUT THE SAME VALUE
-*/
+
+
+
 class AbstractActionCreator {
 private:
 	Map* map;
@@ -841,7 +673,12 @@ public:
 			string to_be_built = this->map->getSelectedBuilding();
 			int ID = this->map->getGeneratorId();
 
-
+			/*
+			IF THERE IS NO SELECTED BUILDING (to_be_built == "NONE")... THEN WE SHALL THROW...
+			same for training units...
+			THERE IS A PROBLEM WITH TURN CHANGE. WE MUST DELETE THE to_be_built AND to_be_trained STRINGS
+			SO THAT WE SHALL NEVER RANDOMLY CONSTRUCT A Town Center IN THE MIDDLE OF THE RIVER...
+			*/
 			if (to_be_built == "TOWER") {
 				act->setBuilding(new Tower{ ID,500,20,75 });
 				this->map->incrementGeneratorId();

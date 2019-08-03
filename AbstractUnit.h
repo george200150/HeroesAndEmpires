@@ -330,7 +330,7 @@ public:
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		this->actions.push_back("ATTACK");
 		this->actions.push_back("MOVE");
-		this->actions.push_back("FORTIFY");
+		//this->actions.push_back("FORTIFY");
 		this->actions.push_back("BUILD");
 		this->actions.push_back("REPAIR");
 	}
