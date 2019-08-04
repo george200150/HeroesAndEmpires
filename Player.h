@@ -33,19 +33,33 @@ public:
 			delete civ;
 	}
 
+	/*
+	Method for testing if there are any units left on the map of this player.
+	If there are none, the player has perished and the game ends.
+	*/
 	int getRemainingUnits() const {
 		return this->unitsAlive;
 	}
 
+	/*
+	Method returning the name of the player.
+	The name is set when creating the Game.
+	*/
 	string getName() const {
 		return this->name;
 	}
 
+	/*
+	Method returning this player's unit at (x,y) coordinates,
+	whether there is an EmptyUnit or a normal unit there.
+	*/
 	AbstractUnit* getUnitAt(int x, int y) {
 		return this->units.at(30 * y + x);
 	}
 
+	/*
 
+	*/
 	void setUnitAt(AbstractUnit* unit, int x, int y) {
 		//auto temp = this->units.at(30 * y + x);/*PROBABLY - MEMORY LEAKS HERE *///However, I think not, as I remember the unit replaced was used somewhere else..
 		this->units.at(30 * y + x) = unit;
@@ -55,12 +69,23 @@ public:
 			this->unitsAlive++;
 	}
 
+
+	/*
+
+	*/
 	void resetUnitAt(AbstractUnit* unit, int x, int y) {
 		auto temp = this->units.at(30 * y + x);
 		this->units.at(30 * y + x) = unit;
 		delete temp;
 	}
 
+
+	/*
+	Method called in the constructor of the Player class.
+	This inserts in the "units" vector 600 EmptyUnit-s,
+	representing the layout of the map, so that we could use
+	the same system of accessing units both for Map and Player.
+	*/
 	void initialiseFreeSpace() {
 		int id = -1;
 		int baseHealth = -1;
@@ -76,10 +101,22 @@ public:
 			}
 	}
 
+	/*
+	Method returning the id of the player. This id is used when the turn is changed and
+	the game has to choose the next player to move. As there are only 2 players on the map,
+	we use the "current turn number % total of players" operation when deciding the next player.
+	*/
 	int getPlayerId() const {
 		return this->id;
 	}
 
+	/*
+	function that is called when all units have been generated so that each of them receive the
+	correct colour of their owning player.
+	For each unit in the matrix (of this player), we get the photo of the unit and add the colour (IN CAPS)
+	of the owner + ".fw.png", as this is the type of file used in this project for photo files.
+	The photo now is brushed on the map (with the correct colour).
+	*/
 	void setColourForUnits() {
 		for (auto& unit : this->units) {
 			if (unit->getId() != -1) {
@@ -90,27 +127,65 @@ public:
 		}
 	}
 
+	/*
+	time consuming function - this must go!
+	*/
 	vector<AbstractUnit*> getAllUnits() {
 		return this->units;
 	}
 
+	/*
+	Method returning the colour of this player.
+	This is used when combining the base photo name of a unit with the colour,
+	in order to correctly brush it on the map.
+	*/
 	string getColor() const {
 		return this->color;
 	}
 
+	/*
+	Method returning the civilisation of this player. (Useless at the moment...)
+	*/
 	Civilisation* getCivilisation() {
 		return this->civ;
 	}
 
+	/*
+	Method overwriting the unit at (x,y) on the unit matrix.
+
+	---(!!! IF USED INCORRECTLY, THIS WILL CAUSE IRREVERSIBLE MEMORY LEAKS !!!)---
+
+	*/
+	void forceAddUnit(AbstractUnit* unit, int x, int y) {
+		this->units.at(30 * y + x) = unit;
+	}
+
+	/*
+	Method that replaces the unit at (x,y) by
+	deleting the previous unit, then writing the new info.
+	(Also, if the unit added was not an EmptyUnit, the number of alive units increases.
+	
+	CAUTION: THIS FUNCTION WILL NOT DECREASE THE UNIT COUNT WHEN DELETING THE PREVIOUS UNIT.
+	WE ASSUME THAT THE UNIT DELETED -WAS NOT- A NORMAL UNIT.)
+	*/
 	void addUnit(AbstractUnit* unit, int x, int y) {
 		auto temp = this->units.at(30 * y + x);
-		this->units.at(30 * y + x) = unit;/*MEMORY LEAK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+		this->units.at(30 * y + x) = unit;/*(used to be) MEMORY LEAK HERE!!!!!!!!!!!*/
 		delete temp;
 		
 		if(unit->getId() != -1)
 			this->unitsAlive++;
 	}
 
+
+	/*
+	Method that searches an unit in the matrix (using its id) and deletes it, replacing
+	the position on map with an EmptyUnit. If the deleted unit was a normal one, the alive
+	unit count decreases.
+
+	WARNING: this function is time consuming, complexity = O(n), where n = 30x20.
+	( We could have the alternative faster function - Theta(1), namely e.g. DeleteUnitAt() )
+	*/
 	void deleteUnit(AbstractUnit* unit) {
 		int i = 0;
 		for (auto& u : this->units) {

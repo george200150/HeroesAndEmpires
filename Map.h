@@ -23,7 +23,10 @@ private:
 
 	int player_turn_count, player_count;
 	int base_money_per_turn, current_money_per_turn;
-	string selectedAction;
+	string selectedAction;//dk if needed...
+	string to_be_built = "NONE";
+	string to_be_trained = "NONE";
+	int ID = 6;
 
 	AbstractTile* SelectedTile = nullptr;
 	AbstractUnit* SelectedUnit = nullptr;
@@ -39,6 +42,42 @@ private:
 
 public:
 
+	bool isSurroundAllOccupied(int x, int y) {
+		if (x + 1 < 20 && getTileAt(x + 1, y)->isOccupied() && /*S*/
+			x + 1 > 0 && y + 1 < 30 && getTileAt(x + 1, y + 1)->isOccupied() && /*SE*/
+			y + 1 < 30 && getTileAt(x, y + 1)->isOccupied() || /*E*/
+			x - 1 >= 0 && y + 1 < 30 && getTileAt(x - 1, y + 1)->isOccupied() && /*NE*/
+			x - 1 >= 0 && getTileAt(x - 1, y)->isOccupied() || /*N*/
+			x - 1 >= 0 && y - 1 >= 0 && getTileAt(x - 1, y - 1)->isOccupied() && /*NW*/
+			y - 1 >= 0 && getTileAt(x, y - 1)->isOccupied() && /*W*/
+			x + 1 < 20 && y - 1 >= 0 && getTileAt(x + 1, y - 1)->isOccupied() /*SW*/)
+			return true;
+		return false;
+	}
+
+
+	int getGeneratorId() const {
+		return this->ID;
+	}
+	void incrementGeneratorId() {
+		this->ID++;
+	}
+
+	void setSelectedBuilding(string building) {
+		this->to_be_built = building;
+	}
+
+	void setSelectedUnit(string unit) {
+		this->to_be_trained = unit;
+	}
+
+	string getSelectedBuilding() const {
+		return this->to_be_built;
+	}
+
+	string getSelectedTrained() const {
+		return this->to_be_trained;
+	}
 
 	Player* getActivePlayer() {
 		return this->players.at(this->player_turn_count % this->player_count);
@@ -74,7 +113,7 @@ public:
 
 	bool SelectedUnitBelongsToActivePlayer(int x, int y) const {//function uses class parameter turn_count.
 		for (auto player : this->players) {
-			if (player->getPlayerId() == this->getPlayerIdToBeActive() && player->getAllUnits().at(30 * y + x)->getId() != -1) {
+			if (player->getPlayerId() == this->getPlayerIdToBeActive() && player->getUnitAt(x, y)->getId() != -1) {
 				return true;
 			}
 		}
@@ -230,6 +269,8 @@ public:
 		this->selectedX = -1;
 		this->selectedY = -1;
 		this->selectedAction = "NONE";
+		this->to_be_built = "NONE";
+		this->to_be_trained = "NONE";
 	}
 
 	bool UnitExistsInSelected(AbstractUnit* localSelectedUnit) {
@@ -376,20 +417,5 @@ public:
 			this->actionSucceded = true;
 		}
 	}
-	//void fortifyAction(AbstractUnit* Fortificator, AbstractUnit* Fortificated);
-	//void buildAction(AbstractUnit* Builder, AbstractUnit* Building);
-	//void repairAction(AbstractUnit* Repairer, AbstractUnit* Building);
-	//void destroyAction(AbstractUnit* Destroyed) {
-	//	//this->player_count->deleteUnit();
-	//	auto temp = Destroyed;
-	//	vector<int> xy = getXYbyUnit(Destroyed);
-	//	Destroyed = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };//this could go
-	//	delete temp;//nu ii place aici ca se sterge...
-	//	//ALSO MODIFY IN 
-	//	int x = xy.at(0);
-	//	int y = xy.at(1);
-	//	this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
-	//	this->tileMatrix.at(30 * y + x)->unoccupy();
-	//}
 };
 
