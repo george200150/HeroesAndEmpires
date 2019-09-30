@@ -163,7 +163,7 @@ public:
 
 	void choose() {
 		if (this->lst->selectedItems().isEmpty()) {
-			QMessageBox::warning(this, "Warning", "YOU MUST SELECT A BUILDING FIRST!");
+			QMessageBox::warning(this, "Warning", "YOU MUST SELECT A UNIT FIRST!");
 		}
 		else {
 			auto item = this->lst->selectedItems().at(0);
@@ -179,6 +179,12 @@ public:
 			else if (unit == "GALLEON") {
 				this->map->setSelectedUnit("GALLEON");
 			}
+			else if (unit == "TRANSPORT SHIP") {
+				this->map->setSelectedUnit("TRANSPORT SHIP");
+			}
+			/*else if (unit == "GALLEON") {
+				this->map->setSelectedUnit("GALLEON");
+			}*/
 
 
 			this->close();

@@ -118,6 +118,10 @@ public:
 	}
 	void execute() override {
 		//execute the move action from Source to Destination of the selected unit.
+		auto sourceUnit = this->map->getUnitAt(sourceX, sourceY);
+
+		if (sourceUnit->getType() == "LAND" && this->map->isAboveRiver(sourceX, sourceY) != this->map->isAboveRiver(effectX, effectY))
+			throw ExecutionException{ "YOUR UNIT CANNOT SWIM!" };
 
 		//I MUST CHECK IF THE UNITS DO NOT OVERLAP
 		auto destination = this->map->getTileAt(effectX, effectY);
@@ -127,7 +131,7 @@ public:
 		}
 		else {
 			//I MUST CHECK IF THE UNIT TYPE ALLOWS THE MOVE
-			auto sourceUnit = this->map->getUnitAt(sourceX, sourceY);
+			/*auto sourceUnit = this->map->getUnitAt(sourceX, sourceY);*/
 			if (sourceUnit->getType() == "LAND" && destination->getType() == "GRASS" || sourceUnit->getType() == "WATER" && destination->getType() == "WATER") {
 				this->map->getUnitAt(sourceX, sourceY)->setPos(effectX * 50, effectY * 50);
 				this->map->moveUnitFromTo(sourceX, sourceY, effectX, effectY);
@@ -528,17 +532,143 @@ public:
 };
 
 
+//EmbarkAction - is basically a MoveAction + check if boat is docked.
+class EmbarkAction : public AbstractAction {
+protected:
+public:
+	EmbarkAction(Map* map, int baseCost, int sourceX, int sourceY, int effectX, int effectY) :
+		AbstractAction{ map ,baseCost, sourceX, sourceY, effectX,effectY } {
+		int distance = this->map->computeDistance(sourceX, sourceY, effectX, effectY);
+		this->baseCost *= distance;
+	}
+	void execute() override {
 
+		//execute the move action from Source to Destination of the selected unit.
+		auto sourceUnit = this->map->getUnitAt(sourceX, sourceY);
+		auto boatUnit = this->map->getUnitAt(effectX, effectY);
+		
+		//int distance = this->map->computeDistance(sourceX, sourceY, effectX, effectY);
+		//i guess distance and cost are ok...
+
+		if (boatUnit->getType() != "WATER")
+			throw ExecutionException{ "YOU CANNOT EMBARK IN THAT UNIT!" };
+
+		//if(boat is not docked then you cannot embark)
+		if (!boatUnit->isDocked())
+			throw ExecutionException{ "BOAT HAS NOT DOCKED YET!" };
+
+		if (boatUnit->getTotalCapacity() == boatUnit->getNumberOfOccupants())
+			throw ExecutionException{ "BOAT MAX CAPACITY ALREADY REACHED!" };
+
+		//copyOfSourceUnit = new  ... well, i must exactly know what unit embarked here...
+
+		boatUnit->addOccupant(sourceUnit);
+		this->map->removeFromMapUnitAt(sourceX, sourceY);
+		//I should duplicate this unit and totally remove it from both the player and the map
+		//alive unit count will not modify game state, as the boat still is alive
+
+		//throw EmbarkException - this will remove the unit from the scene
+
+	}
+	AbstractUnit* getSourceUnit() override {
+		return this->map->getUnitAt(sourceX, sourceY);
+	}
+	AbstractUnit* getEffectUnit() override {
+		return this->map->getUnitAt(effectX, effectY);
+	}
+	AbstractTile* getSourceTile() override {
+		return this->map->getTileAt(sourceX, sourceY);
+	}
+	AbstractTile* getEffectTile() override {
+		return this->map->getTileAt(effectX, effectY);
+	}
+	vector<int> getSourceCoords() const override {
+		vector<int> xy;
+		xy.push_back(this->sourceX);
+		xy.push_back(this->sourceY);
+		return xy;
+	}
+	vector<int> getEffectCoords() const override {
+		vector<int> xy;
+		xy.push_back(this->effectX);
+		xy.push_back(this->effectY);
+		return xy;
+	}
+	int getBaseCost() const override {
+		return this->baseCost;
+	}
+};
+//DisembarkAction - is like a train/build - creating that unit (just show on map)
+class DisembarkAction : public AbstractAction {
+protected:
+public:
+	DisembarkAction(Map* map, int baseCost, int sourceX, int sourceY, int effectX, int effectY) :
+		AbstractAction{ map ,baseCost, sourceX, sourceY, effectX,effectY } {}
+	void execute() override {
+	}
+	AbstractUnit* getSourceUnit() override {
+		return this->map->getUnitAt(sourceX, sourceY);
+	}
+	AbstractUnit* getEffectUnit() override {
+		return this->map->getUnitAt(effectX, effectY);
+	}
+	AbstractTile* getSourceTile() override {
+		return this->map->getTileAt(sourceX, sourceY);
+	}
+	AbstractTile* getEffectTile() override {
+		return this->map->getTileAt(effectX, effectY);
+	}
+	vector<int> getSourceCoords() const override {
+		vector<int> xy;
+		xy.push_back(this->sourceX);
+		xy.push_back(this->sourceY);
+		return xy;
+	}
+	vector<int> getEffectCoords() const override {
+		vector<int> xy;
+		xy.push_back(this->effectX);
+		xy.push_back(this->effectY);
+		return xy;
+	}
+	int getBaseCost() const override {
+		return this->baseCost;
+	}
+};
 
 class DockAction : public AbstractAction {
 protected:
 public:
 	DockAction(Map* map, int baseCost, int sourceX, int sourceY, int effectX, int effectY) :
-		AbstractAction{ map ,baseCost, sourceX, sourceY, effectX,effectY } {}
+		AbstractAction{ map ,baseCost, sourceX, sourceY, effectX,effectY } {
+		auto distance = this->map->computeDistance(sourceX, sourceY, effectX, effectY);
+		this->baseCost *= distance;
+	}
 	void execute() override {
 		//execute the attack action from Source(Attacker) to Destination(Defender).
 
-		//dock...somehow - not available yet...
+		auto unit = this->map->getUnitAt(sourceX, sourceY);
+
+		//if (unit->getType() == "LAND")
+		//	throw ExecutionException{ "A LAND UNIT CANNOT DOCK..." };
+
+		if (unit->isDocked()) {
+			unit->undock();
+			throw MessageException{ "UNIT HAS UNDOCKED!" };
+
+		}
+		else {
+			this->map->moveUnitFromTo(sourceX, sourceY, effectX, effectY);
+			unit->dock();
+			throw MessageException{ "UNIT HAS DOCKED!" };
+		}
+		//i should whether create 2 actions: dock and undock and instantiate one accordingly to the unit's state
+		//or
+		//i should check if there is any land near the boat when docking.if not, cannot dock.
+		
+		
+
+		//if docked then undock
+		//else dock (allow units to embark)
 	}
 	AbstractUnit* getSourceUnit() override {
 		return this->map->getUnitAt(sourceX, sourceY);
@@ -712,16 +842,26 @@ public:
 				act->setCharacter(new HorseArcher{ ID,300,30,90 });
 				this->map->incrementGeneratorId();
 			}
-			/*else if (to_be_trained == "BARRACKS") {
-				act->setBuilding(new Barracks{ ID,400,0,0 });
+			else if (to_be_trained == "TRANSPORT SHIP") {
+				act->setCharacter(new TransportShip{ ID,100,0,0 });
+				this->map->incrementGeneratorId();
+			}
+			/*else if (to_be_trained == "TRANSPORT SHIP") {
+				act->setBuilding(new TransportShip{ ID,100,0,0 });
 				this->map->incrementGeneratorId();
 			}*/
 		}
 		else if (actionName == "REPAIR") {
 			act = new RepairAction{ map ,2 * cost, sourceX, sourceY, effectX, effectY };
 		}
-		else if (actionName == "DOCK") {
-			act = new DockAction{ map ,cost, sourceX, sourceY, effectX, effectY };
+		else if (actionName == "DOCK/UNDOCK") {
+			act = new DockAction{ map ,3 * cost, sourceX, sourceY, effectX, effectY };
+		}
+		else if (actionName == "EMBARK") {
+			act = new EmbarkAction{ map , 0, sourceX, sourceY, effectX, effectY };
+		}
+		else if (actionName == "DISEMBARK") {
+			act = new DisembarkAction{ map , 0, sourceX, sourceY, effectX, effectY };
 		}
 		//else {}
 	}

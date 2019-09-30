@@ -42,6 +42,12 @@ private:
 
 public:
 
+	bool isAboveRiver(int x, int y) const {
+		if (19 * x + 29 * y - 551 >= 0)
+			return true;
+		return false;
+	}
+
 	bool isSurroundAllOccupied(int x, int y) {
 		if (x + 1 < 20 && getTileAt(x + 1, y)->isOccupied() && /*S*/
 			x + 1 > 0 && y + 1 < 30 && getTileAt(x + 1, y + 1)->isOccupied() && /*SE*/
@@ -168,6 +174,13 @@ public:
 
 	}
 
+	void removeFromMapUnitAt(int x, int y) {
+		auto replacement = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1,-1 };
+		this->unitMatrix.at(30 * y + x) = replacement;
+		Player* pl = this->getOwnerAt(x, y);
+		pl->setUnitAt(replacement, x, y);
+	}
+
 	void clearUnitAt(int x, int y){
 		//Player* pl = this->getOwnerAt(x, y);
 		//pl->setUnitAt(new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 }, x, y);
@@ -176,7 +189,7 @@ public:
 
 
 		//auto temp = this->unitMatrix.at(30 * y + x);
-		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
+		this->unitMatrix.at(30 * y + x) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1,-1 };
 		//delete temp;
 		this->tileMatrix.at(30 * y + x)->unoccupy();
 	}
@@ -383,9 +396,10 @@ public:
 		string type = "-1";
 		float speed = -1;
 		int range = -1;
+		int totalCapacity = -1;
 		for (int i = 0; i < 30; i++)
 			for (int j = 0; j < 20; j++) {
-				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance, type, speed, range };
+				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance, type, speed, range, totalCapacity };
 				this->unitMatrix.push_back(unit);
 				EmptyTile* tile = new EmptyTile{ false,false };
 				this->tileMatrix.push_back(tile);
@@ -396,7 +410,7 @@ public:
 	void moveAction(/*AbstractTile* Source, */AbstractTile* Destination, /*AbstractUnit* Unit,*/ int destX, int destY) {
 		auto exUnit = getUnitAt(selectedX, selectedY);//get unit @ source
 		this->unitMatrix.at(30 * destY + destX) = exUnit;//move the pointer to the unit to another tile
-		this->unitMatrix.at(30 * selectedY + selectedX) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };//mark the last position of the unis as free
+		this->unitMatrix.at(30 * selectedY + selectedX) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1,-1 };//mark the last position of the unis as free
 		this->SelectedTile->unoccupy();
 		Destination->occupy();
 	}

@@ -33,6 +33,11 @@ public:
 			delete civ;
 	}
 
+	/*void removeFromPlayerAt(int x, int y) {
+		this->units.at(30*y+x)=new Empt
+	}*///this is actually the set unit at function...
+
+
 	/*
 	Method for testing if there are any units left on the map of this player.
 	If there are none, the player has perished and the game ends.
@@ -94,9 +99,10 @@ public:
 		float speed = -1;
 		int range = -1;
 		string type = "-1";
+		int totalCapacity = -1;
 		for (int i = 0; i < 30; i++)
 			for (int j = 0; j < 20; j++) {
-				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance, type, speed, range };
+				EmptyUnit* unit = new EmptyUnit{ id, baseHealth, damagePerHit, hitChance, type, speed, range, totalCapacity };
 				this->units.push_back(unit);
 			}
 	}
@@ -195,7 +201,7 @@ public:
 					this->unitsAlive--;
 
 				auto temp = this->units.at(i);
-				this->units.at(i) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1 };
+				this->units.at(i) = new EmptyUnit{ -1,-1,-1,-1,"-1",-1,-1,-1 };
 				delete temp;
 
 				break;

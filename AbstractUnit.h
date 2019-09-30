@@ -28,14 +28,23 @@ protected:
 	
 	float speed;
 	int range;
-	//int totalCapacity;
-	//int occupiedCapacity;
+	
+
+	int totalCapacity;
+	int occupiedCapacity;
+	vector<AbstractUnit*> occupants;
+	
 	//bool canFortify;
+	bool docked;
 	//this implies one more inheritance, as there must be a vector of units on each tile...
 	//(composite pattern)
 	vector<string> actions;
 	vector<string> trainable;
 public:
+
+	virtual bool isDocked() const = 0;
+	virtual void dock() = 0;
+	virtual void undock() = 0;
 
 	virtual vector<string> getTrainable() const = 0;
 
@@ -43,14 +52,58 @@ public:
 	Constructor of the AbstractUnit class. This method sets the id, hp, damage, hit chance and the type.
 	Also, it automatically sets the shape of the unit to a 50x50 square.
 	*/
-	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type, float speed, int range) :
+	AbstractUnit(int id, int baseHealth, int damagePerHit, int hitChance, string type, float speed, int range, int totalCapacity) :
 		id{ id }, baseHealth{ baseHealth }, BaseDamagePerHit{ damagePerHit },
-		baseHitChance{ hitChance }, type{ type }, speed{ speed }, range{ range }{
+		baseHitChance{ hitChance }, type{ type }, speed{ speed }, range{ range }, totalCapacity{ totalCapacity } {
 		setRect(0, 0, 50, 50);
+		occupiedCapacity = 0;
 		currentHealth = baseHealth;
 		currentDamagePerHit = damagePerHit;
 		currentHitChance = hitChance;
 	}
+	
+
+	/*
+	*/
+	virtual int getTotalCapacity() const = 0;
+
+
+
+
+	/*
+	*/
+	virtual int getNumberOfOccupants() const = 0;
+
+
+
+
+	/*
+	*/
+	virtual void setNumberOfOccupants(int number) = 0;
+
+
+
+
+	/*
+	*/
+	virtual vector<AbstractUnit*> getOccupants() = 0;
+
+
+
+
+	/*
+	*/
+	virtual void addOccupant(AbstractUnit* unit) = 0;
+
+
+
+
+	/*
+	*/
+	virtual void removeOccupant(AbstractUnit* unit) = 0;
+
+
+
 
 	/*
 	Method that returns an integer representing the speed of the unit.
@@ -220,17 +273,54 @@ public:
 	virtual void modifyCurrentHitChance(int newCHC) = 0;
 
 	virtual ~AbstractUnit() = default;
+	//~AbstractUnit() {//!!! ... ???
+	//	for (auto& elem : this->occupants)
+	//		delete elem;
+	//}
 };
 
+
+///*
+//*/
+//virtual vector<AbstractUnit*> getOccupants() {
+//	return this->occupants;
+//}
+//
+//
+//
+//
+///*
+//*/
+//virtual void addOccupant(AbstractUnit* unit) {
+//	this->occupants.push_back(unit);
+//}
+//
+//
+//
+//
+///*
+//*/
+//virtual void removeOccupant(AbstractUnit* unit) {
+//	//remove unit
+//}
 
 
 class AbstractCharacter : public AbstractUnit {
 protected:
 public:
-	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
-		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
+	AbstractCharacter(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range, int totalCapacity) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range, totalCapacity } {
 	}
 
+	virtual bool isDocked() const override = 0;
+	virtual void dock() override = 0;
+	virtual void undock() override = 0;
+	virtual int getTotalCapacity() const override = 0;
+	virtual int getNumberOfOccupants() const override = 0;
+	virtual void setNumberOfOccupants(int number) override = 0;
+	virtual vector<AbstractUnit*> getOccupants() override = 0;
+	virtual void addOccupant(AbstractUnit* unit) override = 0;
+	virtual void removeOccupant(AbstractUnit* unit) override = 0;
 	virtual vector<string> getTrainable() const override = 0;
 	virtual float getSpeed() const override = 0;
 	virtual int getRange() const override = 0;
@@ -260,10 +350,19 @@ public:
 class AbstractBuilding : public AbstractUnit {
 protected:
 public:
-	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
-		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
+	AbstractBuilding(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range, int totalCapacity) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range, totalCapacity } {
 	}
 
+	virtual bool isDocked() const override = 0;
+	virtual void dock() override = 0;
+	virtual void undock() override = 0;
+	virtual int getTotalCapacity() const override = 0;
+	virtual int getNumberOfOccupants() const override = 0;
+	virtual void setNumberOfOccupants(int number) override = 0;
+	virtual vector<AbstractUnit*> getOccupants() override = 0;
+	virtual void addOccupant(AbstractUnit* unit) override = 0;
+	virtual void removeOccupant(AbstractUnit* unit) override = 0;
 	virtual vector<string> getTrainable() const override = 0;
 	virtual float getSpeed() const override { return 0; };
 	virtual int getRange() const override = 0;
@@ -293,10 +392,19 @@ public:
 class EmptyUnit : public AbstractUnit {
 protected:
 public:
-	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range) :
-		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range } {
+	EmptyUnit(int id, int baseHealth, int damagePerHit, int hitChange, string type, float speed, int range, int totalCapacity) :
+		AbstractUnit{ id, baseHealth ,damagePerHit, hitChange, type, speed, range, totalCapacity } {
 	}
 
+	virtual bool isDocked() const override { return false; }
+	virtual void dock() override {}
+	virtual void undock() override {}
+	virtual int getTotalCapacity() const override {return 0;}
+	virtual int getNumberOfOccupants() const override { return 0; }
+	virtual void setNumberOfOccupants(int number) override {}
+	virtual vector<AbstractUnit*> getOccupants() override { vector<AbstractUnit*> v;  return v; }
+	virtual void addOccupant(AbstractUnit* unit) override {}
+	virtual void removeOccupant(AbstractUnit* unit) override {}
 	virtual vector<string> getTrainable() const override { vector<string> v;  return v; };
 	virtual float getSpeed() const override { return -1; }
 	virtual int getRange() const override { return -1; };
@@ -324,15 +432,45 @@ class Villager : public AbstractCharacter {
 protected:
 public:
 	Villager(int id, int baseHealth, int damagePerHit, int hitChange) :
-		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 1, 1 } {
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 1, 1, 0 } {
 		this->photo = "villager";
 
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		this->actions.push_back("ATTACK");
 		this->actions.push_back("MOVE");
-		//this->actions.push_back("FORTIFY");
+		this->actions.push_back("FORTIFY");//fortify ~= embark
 		this->actions.push_back("BUILD");
 		this->actions.push_back("REPAIR");
+		this->actions.push_back("EMBARK");
+	}
+
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override {
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	virtual void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	virtual void removeOccupant(AbstractUnit* unit) override {
+		//...
 	}
 
 	vector<string> getTrainable() const override {
@@ -428,13 +566,42 @@ class Tower : public AbstractBuilding {
 protected:
 public:
 	Tower(int id, int baseHealth, int damagePerHit, int hitChange) :
-		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 3 } {
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 3, 5} {
 		this->photo = "tower";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		this->actions.push_back("ATTACK");
 	}
 
 	//speed == 0;
+
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override {
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	void removeOccupant(AbstractUnit* unit) override {
+		//...
+	}
 
 	vector<string> getTrainable() const override {
 		return this->trainable;
@@ -522,12 +689,41 @@ class Galleon : public AbstractCharacter {
 protected:
 public:
 	Galleon(int id, int baseHealth, int damagePerHit, int hitChange) :
-		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER", 1, 2 } {
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER", 1, 2, 0 } {
 		this->photo = "galleon";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		this->actions.push_back("ATTACK");
 		this->actions.push_back("MOVE");
-		this->actions.push_back("DOCK");
+		this->actions.push_back("DOCK/UNDOCK");
+	}
+
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override {
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	void removeOccupant(AbstractUnit* unit) override {
+		//...
 	}
 
 	vector<string> getTrainable() const override {
@@ -622,11 +818,41 @@ class HorseArcher : public AbstractCharacter {
 protected:
 public:
 	HorseArcher(int id, int baseHealth, int damagePerHit, int hitChange) :
-		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 2, 2 } {
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "LAND", 2, 2, 0 } {
 		this->photo = "horse_archer";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		this->actions.push_back("ATTACK");
 		this->actions.push_back("MOVE");
+		this->actions.push_back("EMBARK");
+	}
+
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override {
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	void removeOccupant(AbstractUnit* unit) override {
+		//...
 	}
 
 	vector<string> getTrainable() const override {
@@ -720,7 +946,7 @@ class TownCenter : public AbstractBuilding {
 protected:
 public:
 	TownCenter(int id, int baseHealth, int damagePerHit, int hitChange) :
-		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 3 } {
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 3, 10 } {
 		this->photo = "town_center";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		this->actions.push_back("TRAIN");
@@ -728,6 +954,35 @@ public:
 	}
 
 	//speed == 0;
+
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override {
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	void removeOccupant(AbstractUnit* unit) override {
+		//...
+	}
 
 	vector<string> getTrainable() const override {
 		return this->trainable;
@@ -814,14 +1069,167 @@ class Dock : public AbstractBuilding {
 protected:
 public:
 	Dock(int id, int baseHealth, int damagePerHit, int hitChange) :
-		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "WATER", 0, 0 } {
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "WATER", 0, 0, 0 } {
 		this->photo = "dock";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
 		this->actions.push_back("TRAIN");
 		this->trainable.push_back("GALLEON");
+		this->trainable.push_back("TRANSPORT SHIP");
 	}
 
 	//speed == 0;
+
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override {
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	void removeOccupant(AbstractUnit* unit) override {
+		//...
+	}
+
+	vector<string> getTrainable() const override {
+		return this->trainable;
+	}
+
+	int getRange() const override {
+		return this->range;
+	}
+
+	string getPhoto() const override {
+		return this->photo;
+	}
+	void setPhoto(string newPhoto) override {
+		this->photo = newPhoto;
+	}
+
+	vector<string> getActions() override {
+		return this->actions;
+	}
+
+	virtual bool canMove() const override { return false; }
+
+	string getType() const override {
+		return this->type;
+	}
+
+	int getId() const override {
+		return this->id;
+	}
+
+	int getBaseHealth() const  override {
+		return this->baseHealth;
+	}
+
+	void modifyBaseHealth(int newBH)  override {
+		this->baseHealth = newBH;
+	}
+
+
+	int getCurrentHealth() const  override {
+		return this->currentHealth;
+	}
+
+	void modifyCurrentHealth(int newCH)  override {
+		this->currentHealth = newCH;
+	}
+
+
+	int getBaseDamagePerHit() const  override {
+		return this->BaseDamagePerHit;
+	}
+
+	void modifyBaseDamagePerHit(int newBDPH)  override {
+		this->BaseDamagePerHit = newBDPH;
+	}
+
+
+	int getCurrentDamagePerHit() const override {
+		return this->currentDamagePerHit;
+	}
+
+	void modifyCurrentDamagePerHit(int newCDPH) override {
+		this->currentDamagePerHit = newCDPH;
+	}
+
+
+	int getBaseHitChance() const override {
+		return this->baseHitChance;
+	}
+	void modifyBaseHitChance(int newBHC) override {
+		this->baseHitChance = newBHC;
+	}
+
+
+	int getCurrentHitChance() const override {
+		return this->currentHitChance;
+	}
+	void modifyCurrentHitChance(int newCHC) override {
+		this->currentHitChance = newCHC;
+	}
+};
+
+class Barracks : public AbstractBuilding {
+protected:
+public:
+	Barracks(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 0, 0 } {
+		this->photo = "barracks";
+		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
+		this->actions.push_back("TRAIN");
+		this->trainable.push_back("HORSE ARCHER");
+	}
+
+	//speed == 0;
+
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override {
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	void removeOccupant(AbstractUnit* unit) override {
+		//...
+	}
 
 	vector<string> getTrainable() const override {
 		return this->trainable;
@@ -904,21 +1312,55 @@ public:
 	}
 };
 
-class Barracks : public AbstractBuilding {
+class TransportShip : public AbstractCharacter {
 protected:
 public:
-	Barracks(int id, int baseHealth, int damagePerHit, int hitChange) :
-		AbstractBuilding{ id, baseHealth ,damagePerHit, hitChange, "LAND", 0, 0 } {
-		this->photo = "barracks";
+	TransportShip(int id, int baseHealth, int damagePerHit, int hitChange) :
+		AbstractCharacter{ id, baseHealth ,damagePerHit, hitChange, "WATER", 2, 2, 5 } {
+		this->photo = "transport_ship";
 		setBrush(QBrush(QImage(QString::fromStdString(this->photo + ".fw.png"))));
-		this->actions.push_back("TRAIN");
-		this->trainable.push_back("HORSE ARCHER");
+		this->actions.push_back("MOVE");
+		this->actions.push_back("DOCK/UNDOCK");
+		this->actions.push_back("DISEMBARK");
+
 	}
 
-	//speed == 0;
+	bool isDocked() const override {
+		return this->docked;
+	}
+	void dock() override{
+		this->docked = true;
+	}
+	void undock() override {
+		this->docked = false;
+	}
+
+	int getTotalCapacity() const override {
+		return this->totalCapacity;
+	}
+	int getNumberOfOccupants() const override {
+		return this->occupiedCapacity;
+	}
+	void setNumberOfOccupants(int number) override {
+		this->occupiedCapacity = number;
+	}
+	vector<AbstractUnit*> getOccupants() override {
+		return this->occupants;
+	}
+	void addOccupant(AbstractUnit* unit) override {
+		this->occupants.push_back(unit);
+	}
+	void removeOccupant(AbstractUnit* unit) override {
+		//...
+	}
 
 	vector<string> getTrainable() const override {
-		return this->trainable;
+		//return this->trainable;
+		vector<string> v;  return v;
+	}
+
+	float getSpeed() const override {
+		return this->speed;
 	}
 
 	int getRange() const override {
@@ -936,7 +1378,7 @@ public:
 		return this->actions;
 	}
 
-	virtual bool canMove() const override { return false; }
+	virtual bool canMove() const override { return true; }
 
 	string getType() const override {
 		return this->type;
@@ -946,7 +1388,7 @@ public:
 		return this->id;
 	}
 
-	int getBaseHealth() const  override {
+	int getBaseHealth() const override {
 		return this->baseHealth;
 	}
 
